@@ -1,0 +1,39 @@
+name: Checks
+on: [push, pull_request]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    env:
+      DB_HOST: localhost
+      DB_PORT: '3306'
+      DB_NAME: elevox_test
+      DB_USER: test
+      DB_PASSWORD: test-only
+      SECRET_KEY: ci-only-not-a-deployment-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements-dev.txt
+        working-directory: elebox_backend
+      - run: python -m pytest -q
+        working-directory: elebox_backend
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: elebox_frontend/package-lock.json
+      - run: npm ci
+        working-directory: elebox_frontend
+      - run: npm test && npm run build
+        working-directory: elebox_frontend
+  firmware-logic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: g++ -std=c++11 firmware/tests/alarm_logic_test.cpp -o /tmp/alarm-test && /tmp/alarm-test

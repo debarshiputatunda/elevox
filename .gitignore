@@ -1,0 +1,31 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+config.local.h
+# Dependencies, logs and builds
+node_modules/
+.venv/
+.venv-macos/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.log
+*.tsbuildinfo
+dist/
+build/
+*.bin
+*.elf
+*.map
+.elevox-run/
+.publish/
+.DS_Store
+.vscode/
+.idea/
+.cursor/
+*.csv
+*.xlsx
+*.sql.gz
+
+# Checked-in example import forms contain sample data only.
+!elebox_backend/templates/imports/*.xlsx
