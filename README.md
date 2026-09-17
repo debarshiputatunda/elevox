@@ -25,6 +25,8 @@ The web application retains its account login. The v5 **device dashboard and hot
 
 Read [the v5 setup and data contract](docs/V5_SETUP.md). The first upgrade from the legacy firmware requires USB/serial flashing: the old sketch does not create a hotspot or expose OTA.
 
+Join the open **SBox-<chip ID>** hotspot and open **http://192.168.4.1/**. The same firmware settings page is available over the hotspot and router network. Its **Router Wi-Fi** form saves the router SSID/password across restarts.
+
 The updated v5 uses the currently working Elevox firmware pin map by default. Select the supplied schematic's mapping only after matching the actual circuit. This release does not change the circuit or calibrate the battery divider.
 
 ## Alarm and threshold behavior
@@ -46,6 +48,8 @@ npm run build
 cd ..
 c++ -std=c++11 firmware/tests/alarm_logic_test.cpp -o /tmp/elevox-alarm-test
 /tmp/elevox-alarm-test
+c++ -std=c++11 firmware/tests/wifi_settings_test.cpp -o /tmp/elevox-wifi-test
+/tmp/elevox-wifi-test
 ```
 
 See [the source review](FIRMWARE_HARDWARE_ANALYSIS.md) for the original hardware findings. It is a historical analysis, not validation of the revised firmware or assembled device. Hardware calibration, real-device reconnect/power-cycle tests and manufacturing checks remain necessary.

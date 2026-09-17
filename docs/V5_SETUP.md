@@ -5,7 +5,7 @@
 Use ESP8266 Arduino core **3.1.2** and 80 MHz CPU timing. Sketch:
 `firmware/safety_harness_esp8266_v5_old_sense/safety_harness_esp8266_v5_old_sense.ino`.
 
-Copy `config.local.h.example` to `config.local.h` inside that sketch directory if router access is wanted. Set your router SSID/password there; the file is ignored by Git. With no local configuration, the public build creates only its open hotspot. Give each device its own `SBOX_DEVICE_ID` when operating a fleet.
+Router credentials can be entered directly on the device settings page after joining its hotspot; recompiling is unnecessary. Optional `config.local.h` credentials are only fallback defaults when no valid saved Wi-Fi settings exist. Give each device its own `SBOX_DEVICE_ID` when operating a fleet.
 
 The existing local router settings have been preserved outside public source. `SBOX_SCHEMATIC_PINOUT=0` preserves the old working Elevox mapping: buzzer GPIO15, LED GPIO12, buckles GPIO13/16/14. `=1` selects the supplied schematic mapping: buzzer GPIO12, LED GPIO2, buckles GPIO13/14/16. Hook A/B remain GPIO5/4. GPIO16 still needs the correct external electrical bias; firmware cannot repair floating wiring.
 
@@ -23,12 +23,18 @@ Board selection and flash-size settings must match the physical module. The Node
 
 1. Flash the new firmware over USB/serial using the correct board/port. No physical flashing is performed by this code update.
 2. Join the **SBox-<chip ID>** Wi-Fi network. It has no password. If the OS saved the previous secured network, forget that network and reconnect.
-3. The captive-portal page shows the hotspot IP **192.168.4.1** and the router-assigned IP if connected. If the OS does not automatically open the page, visit **http://192.168.4.1/connect**. Automatic popup behavior depends on the OS; the explicit address remains available.
-4. The hotspot does not provide internet. Stay connected when the OS asks whether to use a network without internet.
+3. The captive portal serves the **same full firmware settings page** as the router connection, including hotspot IP **192.168.4.1** and the router-assigned IP if connected. If the OS does not automatically open the page, visit **http://192.168.4.1/connect**. Automatic popup behavior depends on the OS; the explicit address remains available.
+4. In **Router Wi-Fi**, enter the router SSID and password, then choose **Save & Connect**. Use a 2.4 GHz network; leave the password blank for an open router. Settings persist across restarts. **Disconnect Router** clears saved router credentials while keeping the hotspot enabled. The hotspot does not provide internet. Stay connected when the OS asks whether to use a network without internet.
 5. Set the SBox address in the Elevox website to **192.168.4.1** if the backend Mac is on this hotspot, or use the shown router address if both backend and device are on that router network. A phone connected to the hotspot does not give a separate Mac access to it. One Mac cannot address several isolated SBox hotspots simultaneously through the same Wi-Fi adapter.
 6. Save Hook A/B limits on the monitoring page and wait for **Device limits confirmed**. Power-cycle the device and confirm the same stored limits are reported before offline use.
 
-The hotspot starts without waiting for router association. Station reconnects run alongside it; ESP8266 uses one radio, so the AP channel follows its station connection. Check the serial monitor at 115200 baud for AP configuration success and the hotspot address.
+The hotspot starts without waiting for router association. Station reconnects run alongside it; ESP8266 uses one radio, so the AP channel follows its station connection. Changing router networks may briefly disconnect hotspot clients as the shared radio changes channel. Rejoin SBox and open http://192.168.4.1/ if necessary. Incorrect router credentials do not disable the hotspot. Check the serial monitor at 115200 baud for AP configuration success and the hotspot address.
+
+## Router configuration
+
+`GET /wifi` reports the saved SSID, connection status, hotspot SSID/IP and router IP. It never returns the password. `POST /wifi` accepts form fields `ssid` and `password`, validates them, and returns 202 only after EEPROM commit succeeds. An empty SSID and password disconnect the router. Invalid credentials return 400; storage failure returns 500 and retains the previous settings. Connection attempts run without blocking the monitoring loop.
+
+Router credentials occupy a separate checksummed EEPROM region starting at byte 96; alarm settings retain their existing offsets. Saved blank credentials override compiled defaults. Both `/` and `/connect` serve the self-contained settings page, with no internet assets required. Captive portal popup availability depends on the client OS.
 
 ## Protocol
 

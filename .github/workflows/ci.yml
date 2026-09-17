@@ -37,3 +37,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: g++ -std=c++11 firmware/tests/alarm_logic_test.cpp -o /tmp/alarm-test && /tmp/alarm-test
+      - run: g++ -std=c++11 firmware/tests/wifi_settings_test.cpp -o /tmp/wifi-test && /tmp/wifi-test

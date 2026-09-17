@@ -9,11 +9,16 @@
 #include <DNSServer.h>
 #include "config.h"
 #include "alarm_logic.h"
+#include "wifi_settings.h"
 
 const char* sboxID = SBOX_DEVICE_ID;
 char MDNS_NAME[32];
 String apName;
 DNSServer dnsServer;
+WifiSettings routerWifi={};
+bool wifiApplyPending=false;
+unsigned long wifiQueuedAt=0;
+unsigned long wifiAttemptAt=0;
 // Passwordless development firmware, including the existing update interfaces.
 #define ENABLE_ARDUINO_OTA 1
 const int HOOK_A_PIN = 5, HOOK_B_PIN = 4;
@@ -97,7 +102,7 @@ uint8_t gain=1;
 
 const uint32_t EE_MAGIC=0x5B0C0022; // independent A/B limits; do not reinterpret older EEPROM
 void loadConfig(){
-  EEPROM.begin(96);
+  EEPROM.begin(256); // first 96 bytes retain the existing alarm settings
   uint32_t m; EEPROM.get(0,m);
   if(m!=EE_MAGIC) return;
   EEPROM.get(44,thresholdA); EEPROM.get(48,thresholdB);
@@ -336,6 +341,18 @@ button{cursor:pointer}button:hover{border-color:var(--amb)}
 <div class="strip"></div>
 <div class="net"><span id="n1">-</span><span id="n2">-</span><span id="n3">-</span></div>
 <div class="ab" id="ab"></div>
+<div class="box" style="margin:12px 0"><h2>ROUTER WI-FI</h2><div class="bd">
+<p id="wifiAddresses">Hotspot: http://192.168.4.1 — no hotspot password required.</p>
+<form id="wifiForm">
+<label for="wifiSsid">Router SSID</label><input id="wifiSsid" name="ssid" maxlength="32" autocomplete="off" style="width:200px" required>
+<label for="wifiPassword">Router password</label><input id="wifiPassword" name="password" type="password" maxlength="64" autocomplete="new-password" style="width:200px" placeholder="Blank for an open router">
+<button class="pri" id="wifiSave" type="submit">SAVE &amp; CONNECT</button>
+<button id="wifiForget" type="button">DISCONNECT ROUTER</button>
+</form>
+<p class="hint">These credentials join your router; the SBox hotspot stays passwordless. Enter the router password again when saving. Settings survive power-off.</p>
+<p id="wifiStatus" role="status" aria-live="polite">Loading connection status…</p>
+</div></div>
+
 
 <div class="box state" id="stB"><div class="lbl">LIVE PREDICTION</div><div class="v" id="stV">-</div><div class="exp" id="stX">-</div></div>
 
@@ -474,6 +491,37 @@ $('bDl').onclick=()=>{if(!rows.length)return alert('Nothing recorded');
 const h=['Sl.No','Timestamp','Label','HookA_mean','HookB_mean','A_p2p','B_p2p','Mutual','LinkIdx','LoadA','LoadB','HookA_st','HookB_st','State','Buckle1','Buckle2','Buckle3'];
 const L=[h.join(',')];rows.forEach((r,i)=>L.push([i+1,ts(r.t),r.l,r.a,r.b,r.ap,r.bp,r.m,r.k,r.la,r.lb,r.ha,r.hb,r.s,r.b1?'LOCKED':'OPEN',r.b2?'LOCKED':'OPEN',r.b3?'LOCKED':'OPEN'].join(',')));
 const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([L.join('\n')],{type:'text/csv'}));a.download='harness_'+Date.now()+'.csv';a.click()};
+let wifiInitialized=false,wifiSaving=false,wifiPolling=false,wifiSaveError='';
+const wifiText={connected:'Connected to router',connecting:'Connecting to router…',
+ 'connection-failed':'Unable to connect. Check SSID, password and 2.4 GHz router availability. The hotspot is still available.',
+ 'hotspot-only':'Router disconnected. Use this open hotspot to configure another network.'};
+async function pollWifi(){
+ if(wifiPolling||wifiSaving)return;wifiPolling=true;
+ try{
+  const response=await fetch('/wifi',{cache:'no-store'});
+  if(!response.ok)throw Error('Connection status unavailable');
+  const state=await response.json();
+  if(!wifiInitialized){$('wifiSsid').value=state.ssid;wifiInitialized=true}
+  $('wifiAddresses').textContent='Open hotspot: '+state.ap_ssid+' — http://'+state.ap_ip+
+    (state.sta_ip?' | Router IP: http://'+state.sta_ip:' | Router IP: not connected');
+  $('wifiStatus').textContent=wifiSaveError||wifiText[state.status]||'Connection status unavailable';
+ }catch(e){$('wifiStatus').textContent='Device connection lost. Rejoin the SBox hotspot and open http://192.168.4.1/.'}
+ finally{wifiPolling=false}
+}
+async function saveWifi(ssid,password){
+ if(wifiSaving)return;
+ wifiSaving=true;wifiSaveError='';$('wifiSave').disabled=true;$('wifiForget').disabled=true;
+ try{
+  const response=await fetch('/wifi',{method:'POST',body:new URLSearchParams({ssid,password})});
+  if(!response.ok)throw Error(await response.text());
+  $('wifiPassword').value='';$('wifiSsid').value=ssid;wifiInitialized=true;
+  $('wifiStatus').textContent='Saved on device. '+(ssid?'Connecting…':'Disconnecting router…')+' The open hotspot remains available.';
+ }catch(e){wifiSaveError='Not saved: '+e.message;$('wifiStatus').textContent=wifiSaveError}
+ finally{wifiSaving=false;$('wifiSave').disabled=false;$('wifiForget').disabled=false}
+}
+$('wifiForm').onsubmit=e=>{e.preventDefault();saveWifi($('wifiSsid').value,$('wifiPassword').value)};
+$('wifiForget').onclick=()=>saveWifi('','');
+setInterval(pollWifi,2000);pollWifi();
 setInterval(tick,200);tick();
 </script></body></html>
 )rawliteral";
@@ -485,14 +533,71 @@ void pump(){
   dnsServer.processNextRequest(); MDNS.update(); server.handleClient(); yield();
 }
 
-void showConnectionPage(){
-  String page = F("<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'><meta http-equiv='refresh' content='5'><title>SBox connected</title></head><body style='font:18px system-ui;max-width:600px;margin:40px auto;padding:20px'><h1>SBox connected</h1><p>Hotspot address: <strong>http://192.168.4.1</strong></p><p>Router address: <strong>");
-  page += WiFi.status()==WL_CONNECTED ? WiFi.localIP().toString() : String("Not connected to a router");
-  page += F("</strong></p><p>Use the address reachable from the Mac running Elevox as the SBox IP.</p><p><a href='/'>Open device dashboard</a></p><p>This hotspot has no internet connection.</p></body></html>");
-  server.send(200,"text/html",page);
+// Serve exactly the same self-contained dashboard on both network interfaces.
+void showSettingsPage(){
+  server.sendHeader("Cache-Control","no-store");
+  server.send_P(200,"text/html",INDEX_HTML);
+}
+String jsonString(const char* text){
+  String result="\"";
+  for(const unsigned char* p=(const unsigned char*)text;*p;p++){
+    if(*p=='"'||*p=='\\'){ result+='\\'; result+=(char)*p; }
+    else if(*p<32){ char escape[7]; snprintf(escape,sizeof(escape),"\\u%04x",*p); result+=escape; }
+    else result+=(char)*p;
+  }
+  return result+"\"";
+}
+void loadRouterWifi(){
+  EEPROM.get(96,routerWifi);
+  if(!validWifiSettings(routerWifi)){
+    routerWifi=validWifiCredentials(SBOX_WIFI_SSID,SBOX_WIFI_PASSWORD)
+      ?makeWifiSettings(SBOX_WIFI_SSID,SBOX_WIFI_PASSWORD):makeWifiSettings("","");
+  }
+}
+void applyRouterWifi(){
+  // Never disable or recreate the open AP when changing router credentials.
+  WiFi.setAutoReconnect(false);
+  WiFi.disconnect(false);
+  if(routerWifi.ssid[0]){
+    WiFi.begin(routerWifi.ssid,routerWifi.password);
+    WiFi.setAutoReconnect(true);
+  }
+  wifiAttemptAt=millis();
+  wifiApplyPending=false;
+}
+void showWifiStatus(){
+  bool connected=WiFi.status()==WL_CONNECTED && !wifiApplyPending;
+  const char* state=!routerWifi.ssid[0]?"hotspot-only":connected?"connected":
+    wifiApplyPending?"connecting":(millis()-wifiAttemptAt>=20000)?"connection-failed":"connecting";
+  String json="{\"ssid\":"+jsonString(routerWifi.ssid)+",\"status\":"+jsonString(state);
+  json+=",\"ap_ssid\":"+jsonString(apName.c_str())+",\"ap_ip\":"+jsonString(WiFi.softAPIP().toString().c_str());
+  json+=",\"sta_ip\":"+jsonString(connected?WiFi.localIP().toString().c_str():"");
+  json+="}";
+  server.sendHeader("Cache-Control","no-store");
+  server.send(200,"application/json",json); // Never return the saved password.
+}
+void saveRouterWifi(){
+  if(!server.hasArg("ssid")||!server.hasArg("password")){
+    server.send(400,"text/plain","SSID and password fields are required"); return;
+  }
+  String ssid=server.arg("ssid"),password=server.arg("password");
+  if(ssid.length()!=strlen(ssid.c_str()) || password.length()!=strlen(password.c_str()) ||
+     !validWifiCredentials(ssid.c_str(),password.c_str())){
+    server.send(400,"text/plain","SSID: up to 32 bytes. Password: empty for open Wi-Fi, 8-63 characters, or 64 hexadecimal digits."); return;
+  }
+  WifiSettings candidate=makeWifiSettings(ssid.c_str(),password.c_str());
+  WifiSettings previous; EEPROM.get(96,previous);
+  EEPROM.put(96,candidate);
+  if(!EEPROM.commit()){
+    EEPROM.put(96,previous); // restore RAM buffer too, so another save cannot commit rejected settings
+    server.send(500,"text/plain","Could not save router settings. Previous connection retained."); return;
+  }
+  routerWifi=candidate;
+  server.send(202,"application/json","{\"saved\":true}");
+  wifiApplyPending=true; wifiQueuedAt=millis(); // allow HTTP response to leave before radio changes
 }
 void captiveRedirect(){
-  server.sendHeader("Location","http://192.168.4.1/connect",true);
+  server.sendHeader("Location","http://192.168.4.1/",true);
   server.send(302,"text/plain","");
 }
 bool parseThresholdArg(const char* name, uint32_t& value){
@@ -504,7 +609,9 @@ bool parseThresholdArg(const char* name, uint32_t& value){
 }
 
 void setupEndpoints(){
-  server.on("/connect", showConnectionPage);
+  server.on("/connect", showSettingsPage);
+  server.on("/wifi", HTTP_GET, showWifiStatus);
+  server.on("/wifi", HTTP_POST, saveRouterWifi);
   server.on("/generate_204", captiveRedirect);
   server.on("/gen_204", captiveRedirect);
   server.on("/hotspot-detect.html", captiveRedirect);
@@ -524,13 +631,14 @@ void setupEndpoints(){
       thresholdA=a; thresholdB=b; hookAlarmEnabled=true;
       if(!saveConfig()){
         thresholdA=oldA; thresholdB=oldB; hookAlarmEnabled=oldEnabled;
+        EEPROM.put(44,oldA); EEPROM.put(48,oldB); EEPROM.put(52,(uint8_t)oldEnabled);
         server.send(500,"application/json","{\"saved\":false}"); return;
       }
     }
     hookViolation=hooksExceeded(hookA.valid?(int32_t)dispA:-1,hookB.valid?(int32_t)dispB:-1,thresholdA,thresholdB,hookAlarmEnabled);
     server.send(200,"application/json","{\"saved\":true}");
   });
-  server.on("/", [](){ server.send_P(200,"text/html",INDEX_HTML); });
+  server.on("/", showSettingsPage);
 
   server.on("/config", [](){
     bool ch=false;
@@ -603,20 +711,18 @@ void setup(){
   pinMode(LED_PIN,OUTPUT); pinMode(BUZZER_PIN,OUTPUT);
   digitalWrite(LED_PIN,LOW); digitalWrite(BUZZER_PIN,LOW);
   loadConfig();
+  loadRouterWifi();
   WiFi.persistent(false);
   snprintf(MDNS_NAME,sizeof(MDNS_NAME),"sbox-%06x",ESP.getChipId());
   apName=String("SBox-")+String(ESP.getChipId(),HEX);
-  WiFi.mode(strlen(SBOX_WIFI_SSID)>0?WIFI_AP_STA:WIFI_AP);
+  WiFi.mode(WIFI_AP_STA);
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
   IPAddress apIP(192,168,4,1), mask(255,255,255,0);
   bool addressReady=WiFi.softAPConfig(apIP,apIP,mask);
   bool apReady=WiFi.softAP(apName.c_str(), nullptr, 1, false, 4);
   Serial.printf("[SBOX] AP configuration: %s\n",addressReady&&apReady?"OK":"FAILED");
   dnsServer.start(53,"*",apIP);
-  if(strlen(SBOX_WIFI_SSID)>0){
-    WiFi.setAutoReconnect(true);
-    WiFi.begin(SBOX_WIFI_SSID,SBOX_WIFI_PASSWORD);
-  }
+  applyRouterWifi();
   Serial.println("[SBOX] Open hotspot: "+apName+" -> http://192.168.4.1/connect");
   // Do not wait for a router: hotspot and local alarms must work immediately.
   httpUpdater.setup(&server,"/update");
@@ -640,6 +746,7 @@ void loop(){
   if(otaBusy){ ArduinoOTA.handle(); yield(); return; }
 #endif
   pump();
+  if(wifiApplyPending && millis()-wifiQueuedAt>=500) applyRouterWifi();
   unsigned long now=millis();
 
   static unsigned long lastSense=0;
@@ -685,5 +792,5 @@ void loop(){
   digitalWrite(LED_PIN, SBOX_SCHEMATIC_PINOUT ? (curMode==ALARM_NONE?HIGH:LOW) : (curMode==ALARM_NONE?LOW:HIGH));
 
   static unsigned long lastWifi=0;
-  if(now-lastWifi>10000){ lastWifi=now; if(strlen(SBOX_WIFI_SSID)>0 && WiFi.status()!=WL_CONNECTED) WiFi.reconnect(); }
+  if(now-lastWifi>10000){ lastWifi=now; if(routerWifi.ssid[0] && !wifiApplyPending && WiFi.status()!=WL_CONNECTED) WiFi.reconnect(); }
 }
