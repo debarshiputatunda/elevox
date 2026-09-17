@@ -66,3 +66,16 @@ def test_json_requires_strict_protocol_fields(changes):
     from app.utils.telemetry_parser import parse_telemetry
     with pytest.raises(ValueError):
         parse_telemetry(json.dumps(packet(**changes)))
+
+
+def test_v6_high_guard_uses_existing_alarm_and_sync_contract():
+    from app.utils.telemetry_parser import parse_telemetry
+    reading = parse_telemetry(json.dumps(packet(
+        firmware='v6-high-guard', guard='HIGH', mutual_valid=False,
+        a_timeouts=16, b_timeouts=0, raw1=-1, hook_a_valid=False,
+        state='UNKNOWN', mode='SENSOR')))
+    assert reading.autonomous_hooks is True
+    assert reading.threshold_sync == 'pending'
+    assert reading.device_threshold_a == 20000
+    assert reading.hook_a == -1 and not reading.hook_a_valid
+    assert reading.alarm_cause == 'SENSOR'
