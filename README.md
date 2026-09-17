@@ -20,7 +20,7 @@ For a **new empty development database only**, run `elebox_backend/migrations/00
 
 Double-click **Start Elevox.command**. It installs dependencies when needed, checks the database, starts the API on port 8001 and website on port 5173, and opens the default browser. Double-click **Stop Elevox.command** to stop the two servers and free their ports. MySQL stays running. Logs are in `.elevox-run/`.
 
-For v6.1, open the hotspot page manually at **http://192.168.4.1/**; automatic captive popups are disabled. Build the OTA image with `firmware/build_v6.sh`. See [v6 setup](docs/V6_SETUP.md).
+For v6.2, open the hotspot page manually at **http://192.168.4.1/**; automatic captive popups are disabled. V6.2 adds optional Hand/Metal prediction calibration, independent Link Index, stream diagnostics, device naming and a saved light/dark theme. Build the OTA image with `firmware/build_v6.sh`. See [v6 setup](docs/V6_SETUP.md).
 
 The web application retains its account login. The v5 **device dashboard and hotspot** are passwordless for this development setup; anyone on the device network can access device configuration, alarms and firmware updates.
 
@@ -34,7 +34,7 @@ The updated v5 uses the currently working Elevox firmware pin map by default. Se
 
 ## Alarm and threshold behavior
 
-V6.1 also accepts threshold edits from its firmware page and synchronizes them back to MySQL with revision checks; independent website edits take priority in conflicts.
+V6 also accepts threshold edits from its firmware page and synchronizes them back to MySQL with revision checks; independent website edits take priority in conflicts.
 
 The website saves independent raw hook thresholds to MySQL. The backend sends them to integrated v5, which commits them to EEPROM and uses them while offline. The monitoring page separately shows server-save status and device confirmation. A disconnected device keeps its last confirmed limits; a new value cannot apply there until synchronization completes.
 

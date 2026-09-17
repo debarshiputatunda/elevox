@@ -42,3 +42,5 @@ jobs:
       - run: g++ -std=c++11 firmware/tests/v6_network_test.cpp -o /tmp/network-test && /tmp/network-test
       - run: g++ -std=c++11 firmware/tests/v6_threshold_test.cpp -o /tmp/threshold-test && /tmp/threshold-test
       - run: g++ -std=c++11 firmware/tests/v6_tuning_test.cpp -o /tmp/tuning-test && /tmp/tuning-test
+      - run: g++ -std=c++11 firmware/tests/v6_calibration_test.cpp -o /tmp/calibration-test && /tmp/calibration-test
+      - run: g++ -std=c++11 firmware/tests/v6_preferences_test.cpp -o /tmp/preferences-test && /tmp/preferences-test

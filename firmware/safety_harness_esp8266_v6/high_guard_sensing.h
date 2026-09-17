@@ -9,47 +9,38 @@ struct CapStat { uint32_t med; uint32_t p2p; uint32_t mean; bool valid; uint8_t 
 // Preload HIGH before enabling OUTPUT, including the first measurement after boot.
 inline void driveHookHigh(int pin){ digitalWrite(pin,HIGH); pinMode(pin,OUTPUT); }
 inline void releaseHooks(int a,int b){ pinMode(a,INPUT); pinMode(b,INPUT); }
-CapStat readHook(int sensorPin, int shieldPin, void (*service)()=nullptr){
-  pinMode(sensorPin, INPUT);
-  driveHookHigh(shieldPin);
-
-  uint32_t totalCycles = 0;
-  int validReadings = 0;
-  uint32_t vmin = UINT32_MAX, vmax = 0;
-
-  for(int i = 0; i < HOOK_SAMPLES; i++){
-    driveHookHigh(sensorPin);
+// One bounded measurement per loop: no 16-sample batch blocks HTTP, alarms or Wi-Fi.
+class HookSampler {
+  int sensor=0,guard=0,count=0,validCount=0;
+  uint32_t total=0,minimum=UINT32_MAX,maximum=0;
+  bool active=false;
+public:
+  void begin(int sensorPin,int guardPin){
+    sensor=sensorPin;guard=guardPin;count=validCount=0;total=maximum=0;minimum=UINT32_MAX;active=true;
+  }
+  bool step(){
+    if(!active)return true;
+    pinMode(sensor,INPUT);driveHookHigh(guard);driveHookHigh(sensor);
     delayMicroseconds(CHARGE_US);
-
-    // Keep Wi-Fi interrupts enabled; timing may include interrupt jitter.
-    pinMode(sensorPin, INPUT);
-    uint32_t start = ESP.getCycleCount();
-    uint32_t current = start;
-    while((GPI & (1 << sensorPin)) != 0 && (current - start < DISCHARGE_CEIL)){
-      current = ESP.getCycleCount();
-    }
-
-
-    uint32_t cycleDiff = current - start;
-    if(cycleDiff < DISCHARGE_CEIL){
-      totalCycles += cycleDiff;
-      validReadings++;
-      if(cycleDiff < vmin) vmin = cycleDiff;
-      if(cycleDiff > vmax) vmax = cycleDiff;
-    }
-    yield();
-    if(service)service();
+    pinMode(sensor,INPUT);
+    uint32_t start=ESP.getCycleCount(),current=start;
+    while((GPI&(1u<<sensor)) && (current-start<DISCHARGE_CEIL))current=ESP.getCycleCount();
+    uint32_t cycles=current-start;
+    releaseHooks(sensor,guard);
+    if(cycles<DISCHARGE_CEIL){total+=cycles;validCount++;if(cycles<minimum)minimum=cycles;if(cycles>maximum)maximum=cycles;}
+    count++;active=count<HOOK_SAMPLES;yield();return !active;
   }
-
-  releaseHooks(sensorPin,shieldPin);
-  CapStat r = {0, 0, 0, false, (uint8_t)(HOOK_SAMPLES-validReadings)};
-  if(validReadings > 0){
-    r.valid = (validReadings == HOOK_SAMPLES); // Partial batches cannot represent a complete reading.
-    r.mean = totalCycles / (uint32_t)validReadings;
-    r.med  = r.mean; // old path uses mean as the reported value
-    r.p2p  = (validReadings >= 2) ? (vmax - vmin) : 0;
+  CapStat result() const {
+    CapStat result={0,0,0,false,(uint8_t)(count-validCount)};
+    if(validCount){result.mean=result.med=total/(uint32_t)validCount;result.p2p=validCount>1?maximum-minimum:0;}
+    result.valid=count==HOOK_SAMPLES && validCount==HOOK_SAMPLES;return result;
   }
-  return r;
+};
+// Synchronous wrapper retained for the native GPIO regression tests.
+CapStat readHook(int sensorPin,int shieldPin,void (*service)()=nullptr){
+  HookSampler sampler;sampler.begin(sensorPin,shieldPin);
+  bool done=false;while(!done){done=sampler.step();if(service)service();}
+  return sampler.result();
 }
 
 // Passive reset only: neither hook is ever driven LOW by v6 sensing.

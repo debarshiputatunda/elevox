@@ -33,6 +33,9 @@ unsigned readMask(){
 static int serviceCount=0;
 void service(){serviceCount++;}
 int main(){
+ HookSampler incremental;incremental.begin(5,4);sampleNo=0;
+ assert(!incremental.step());assert(sampleNo==1);assert(modes[4]==INPUT && modes[5]==INPUT);
+ for(int i=1;i<HOOK_SAMPLES;i++)incremental.step();assert(incremental.result().valid);
  auto a=readHook(5,4);auto b=readHook(4,5);
  assert(a.valid && b.valid && sensingHighSeen);
  assert(modes[4]==INPUT && modes[5]==INPUT);
