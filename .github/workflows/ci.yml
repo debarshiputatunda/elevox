@@ -39,3 +39,6 @@ jobs:
       - run: g++ -std=c++11 firmware/tests/alarm_logic_test.cpp -o /tmp/alarm-test && /tmp/alarm-test
       - run: g++ -std=c++11 firmware/tests/wifi_settings_test.cpp -o /tmp/wifi-test && /tmp/wifi-test
       - run: g++ -std=c++11 firmware/tests/v6_sensing_test.cpp -o /tmp/v6-test && /tmp/v6-test
+      - run: g++ -std=c++11 firmware/tests/v6_network_test.cpp -o /tmp/network-test && /tmp/network-test
+      - run: g++ -std=c++11 firmware/tests/v6_threshold_test.cpp -o /tmp/threshold-test && /tmp/threshold-test
+      - run: g++ -std=c++11 firmware/tests/v6_tuning_test.cpp -o /tmp/tuning-test && /tmp/tuning-test

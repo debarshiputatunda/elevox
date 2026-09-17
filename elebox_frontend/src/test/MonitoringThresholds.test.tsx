@@ -148,3 +148,37 @@ it('keeps save ordering when the monitoring page remounts during a slow request'
   await act(async () => { finishFirst(); await vi.advanceTimersByTimeAsync(1); });
   expect(stored).toEqual({ hookA_threshold: 20000, hookB_threshold: 20000 });
 });
+
+
+it('accepts an external threshold change even if telemetry skipped the saved value', async () => {
+  const patch = vi.spyOn(apiClient, 'patch').mockResolvedValue({
+    data: { box_id: 1, hookA_threshold: 20000, hookB_threshold: 3870 },
+  });
+  await mount();
+  fireEvent.click(screen.getByText('Raise A'));
+  await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+  // Repeated old telemetry must not undo our successful save.
+  act(() => { store.dispatch(updateDevice(mapBackendTelemetry(snapshot))); });
+  expect(screen.getByLabelText('Hook A')).toHaveTextContent(/^20000$/);
+  act(() => { store.dispatch(updateDevice(mapBackendTelemetry({ ...snapshot,
+    hook_a_threshold: 0, hook_b_threshold: 4321,
+  }))); });
+  expect(screen.getByLabelText('Hook A')).toHaveTextContent(/^0$/);
+  expect(screen.getByLabelText('Hook B')).toHaveTextContent(/^4321$/);
+  expect(patch).toHaveBeenCalledTimes(1);
+});
+
+it('protects unsaved edits and in-flight saves from incoming thresholds', async () => {
+  let finish!: (value: unknown) => void;
+  const patch = vi.spyOn(apiClient, 'patch').mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+  await mount();
+  fireEvent.click(screen.getByText('Raise A'));
+  act(() => { store.dispatch(updateDevice(mapBackendTelemetry({ ...snapshot, hook_a_threshold: 0 }))); });
+  expect(screen.getByLabelText('Hook A')).toHaveTextContent(/^20000$/);
+  await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+  act(() => { store.dispatch(updateDevice(mapBackendTelemetry({ ...snapshot, hook_a_threshold: 4500 }))); });
+  expect(screen.getByLabelText('Hook A')).toHaveTextContent(/^20000$/);
+  await act(async () => { finish({ data: { box_id: 1, hookA_threshold: 20000, hookB_threshold: 3870 } }); });
+  expect(screen.getByLabelText('Hook A')).toHaveTextContent(/^20000$/);
+  expect(patch).toHaveBeenCalledTimes(1);
+});

@@ -9,7 +9,7 @@ struct CapStat { uint32_t med; uint32_t p2p; uint32_t mean; bool valid; uint8_t 
 // Preload HIGH before enabling OUTPUT, including the first measurement after boot.
 inline void driveHookHigh(int pin){ digitalWrite(pin,HIGH); pinMode(pin,OUTPUT); }
 inline void releaseHooks(int a,int b){ pinMode(a,INPUT); pinMode(b,INPUT); }
-CapStat readHook(int sensorPin, int shieldPin){
+CapStat readHook(int sensorPin, int shieldPin, void (*service)()=nullptr){
   pinMode(sensorPin, INPUT);
   driveHookHigh(shieldPin);
 
@@ -21,14 +21,14 @@ CapStat readHook(int sensorPin, int shieldPin){
     driveHookHigh(sensorPin);
     delayMicroseconds(CHARGE_US);
 
-    noInterrupts();
+    // Keep Wi-Fi interrupts enabled; timing may include interrupt jitter.
     pinMode(sensorPin, INPUT);
     uint32_t start = ESP.getCycleCount();
     uint32_t current = start;
     while((GPI & (1 << sensorPin)) != 0 && (current - start < DISCHARGE_CEIL)){
       current = ESP.getCycleCount();
     }
-    interrupts();
+
 
     uint32_t cycleDiff = current - start;
     if(cycleDiff < DISCHARGE_CEIL){
@@ -38,6 +38,7 @@ CapStat readHook(int sensorPin, int shieldPin){
       if(cycleDiff > vmax) vmax = cycleDiff;
     }
     yield();
+    if(service)service();
   }
 
   releaseHooks(sensorPin,shieldPin);

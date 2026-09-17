@@ -17,7 +17,7 @@ void pinMode(int pin,int mode){
 void digitalWrite(int pin,int value){assert(value==HIGH);latches[pin]=value;}
 void delayMicroseconds(unsigned){}
 void yield(){sampleNo++;}
-void noInterrupts(){}
+void noInterrupts(){assert(!stuck && !partial);}
 void interrupts(){}
 struct FakeESP { unsigned getCycleCount(){return ++ticks;} } ESP;
 unsigned readMask(){
@@ -30,13 +30,15 @@ unsigned readMask(){
 }
 #define GPI readMask()
 #include "../safety_harness_esp8266_v6/high_guard_sensing.h"
+static int serviceCount=0;
+void service(){serviceCount++;}
 int main(){
  auto a=readHook(5,4);auto b=readHook(4,5);
  assert(a.valid && b.valid && sensingHighSeen);
  assert(modes[4]==INPUT && modes[5]==INPUT);
  partial=true;sampleNo=0;auto incomplete=readHook(5,4);partial=false;
  assert(!incomplete.valid && incomplete.timeouts==15);
- stuck=true;auto saturated=readHook(5,4);stuck=false;
+ stuck=true;serviceCount=0;auto saturated=readHook(5,4,service);assert(serviceCount==HOOK_SAMPLES);stuck=false;
  assert(!saturated.valid && saturated.timeouts==HOOK_SAMPLES);
  assert(modes[4]==INPUT && modes[5]==INPUT);
  bool valid=false;coupled=true;

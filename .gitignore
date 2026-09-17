@@ -29,3 +29,6 @@ build/
 
 # Checked-in example import forms contain sample data only.
 !elebox_backend/templates/imports/*.xlsx
+
+# Local firmware archives may contain credentials and compiled artifacts.
+/firmware/*.zip

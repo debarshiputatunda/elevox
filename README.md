@@ -6,7 +6,7 @@ Connected safety-harness monitoring: ESP8266 firmware, a FastAPI/MySQL backend, 
 
 - `elebox_backend/` — REST API, device polling, WebSockets, notifications and MySQL persistence.
 - `elebox_frontend/` — React/TypeScript monitoring and administration UI.
-- `firmware/safety_harness_esp8266_v6/` — experimental HIGH-guard sensing; see [v6 setup](docs/V6_SETUP.md).
+- `firmware/safety_harness_esp8266_v6/` — HIGH-guard sensing, saved Wi-Fi profiles and two-way threshold settings; see [v6 setup](docs/V6_SETUP.md).
 - `firmware/safety_harness_esp8266_v5_old_sense/` — integrated v5 firmware, protocol `elevox-v5/1`.
 - `firmware/Elevox/` and other firmware folders — legacy reference versions.
 - `Kicad files/` — supplied MKIII schematic/project; no routed PCB included.
@@ -20,6 +20,8 @@ For a **new empty development database only**, run `elebox_backend/migrations/00
 
 Double-click **Start Elevox.command**. It installs dependencies when needed, checks the database, starts the API on port 8001 and website on port 5173, and opens the default browser. Double-click **Stop Elevox.command** to stop the two servers and free their ports. MySQL stays running. Logs are in `.elevox-run/`.
 
+For v6.1, open the hotspot page manually at **http://192.168.4.1/**; automatic captive popups are disabled. Build the OTA image with `firmware/build_v6.sh`. See [v6 setup](docs/V6_SETUP.md).
+
 The web application retains its account login. The v5 **device dashboard and hotspot** are passwordless for this development setup; anyone on the device network can access device configuration, alarms and firmware updates.
 
 ## Flash and connect v5
@@ -31,6 +33,8 @@ Join the open **SBox-<chip ID>** hotspot and open **http://192.168.4.1/**. The s
 The updated v5 uses the currently working Elevox firmware pin map by default. Select the supplied schematic's mapping only after matching the actual circuit. This release does not change the circuit or calibrate the battery divider.
 
 ## Alarm and threshold behavior
+
+V6.1 also accepts threshold edits from its firmware page and synchronizes them back to MySQL with revision checks; independent website edits take priority in conflicts.
 
 The website saves independent raw hook thresholds to MySQL. The backend sends them to integrated v5, which commits them to EEPROM and uses them while offline. The monitoring page separately shows server-save status and device confirmation. A disconnected device keeps its last confirmed limits; a new value cannot apply there until synchronization completes.
 

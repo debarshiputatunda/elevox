@@ -27,6 +27,11 @@ class TelemetryReading:
     hook_alarm_enabled: bool = False
     threshold_sync: str = 'backend-only'
     device_id: str | None = None
+    threshold_edit_revision: int | None = None
+    threshold_edit_pending: bool = False
+    threshold_base_a: int | None = None
+    threshold_base_b: int | None = None
+    threshold_base_valid: bool = False
 
 
 def _integer(value, name, minimum, maximum):
@@ -82,6 +87,20 @@ def parse_telemetry(payload: str) -> TelemetryReading:
             raise ValueError('Invalid alarm mode')
         _boolean(data['alarm'], 'alarm')
         managed = protocol == V5_PROTOCOL
+        edit_fields = ('threshold_edit_revision', 'threshold_edit_pending',
+                       'threshold_base_a', 'threshold_base_b', 'threshold_base_valid')
+        edit_metadata = {}
+        if any(key in data for key in edit_fields):
+            if not managed or not all(key in data for key in edit_fields):
+                raise ValueError('Incomplete threshold edit metadata')
+            edit_metadata = {
+                'threshold_edit_revision': _integer(data['threshold_edit_revision'],
+                                                   'threshold_edit_revision', 0, 2**32 - 1),
+                'threshold_edit_pending': _boolean(data['threshold_edit_pending'], 'threshold_edit_pending'),
+                'threshold_base_a': _integer(data['threshold_base_a'], 'threshold_base_a', 0, 100000),
+                'threshold_base_b': _integer(data['threshold_base_b'], 'threshold_base_b', 0, 100000),
+                'threshold_base_valid': _boolean(data['threshold_base_valid'], 'threshold_base_valid'),
+            }
         valid_a = _boolean(data['hook_a_valid'], 'hook_a_valid') if managed else a >= 0
         valid_b = _boolean(data['hook_b_valid'], 'hook_b_valid') if managed else b >= 0
         if valid_a != (a >= 0) or valid_b != (b >= 0):
@@ -94,7 +113,8 @@ def parse_telemetry(payload: str) -> TelemetryReading:
             device_threshold_a=_integer(data['threshold_a'], 'threshold_a', 0, 100000) if managed else None,
             device_threshold_b=_integer(data['threshold_b'], 'threshold_b', 0, 100000) if managed else None,
             hook_alarm_enabled=_boolean(data['hook_alarm_enabled'], 'hook_alarm_enabled') if managed else False,
-            threshold_sync='pending' if managed else 'unsupported' , device_id=data['id'])
+            threshold_sync='pending' if managed else 'unsupported', device_id=data['id'],
+            **edit_metadata)
     except (KeyError, TypeError) as exc:
         raise ValueError('Incomplete device telemetry') from exc
 

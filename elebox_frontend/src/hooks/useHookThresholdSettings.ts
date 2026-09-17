@@ -11,6 +11,8 @@ type SaveState = 'saved' | 'saving' | 'error';
 export const useHookThresholdSettings = (device?: TelemetryData) => {
   const queryClient = useQueryClient();
   const values = useRef<Record<number, Thresholds>>({});
+  const observed = useRef<Record<number, Thresholds>>({});
+  const beforeConfirmation = useRef<Record<number, Thresholds>>({});
   const dirty = useRef<Record<number, Partial<Thresholds>>>({});
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
   const revisions = useRef<Record<number, number>>({});
@@ -28,6 +30,7 @@ export const useHookThresholdSettings = (device?: TelemetryData) => {
         const saved = await sboxService.updateThresholds(boxId, thresholds);
         if (mounted.current && revisions.current[boxId] === revision) {
           dirty.current[boxId] = {};
+          beforeConfirmation.current[boxId] = observed.current[boxId];
           const confirmed = { hookA: saved.hookAThreshold ?? values.current[boxId].hookA,
             hookB: saved.hookBThreshold ?? values.current[boxId].hookB };
           values.current[boxId] = confirmed;
@@ -57,12 +60,24 @@ export const useHookThresholdSettings = (device?: TelemetryData) => {
     };
   }, [persist]);
 
-  // Once telemetry confirms our save, release the draft so subsequent server
-  // changes (including edits from another browser) remain visible.
+  useEffect(() => {
+    if (device) observed.current[device.boxId] = {
+      hookA: thresholdToRaw(device.hookAThreshold),
+      hookB: thresholdToRaw(device.hookBThreshold),
+    };
+  }, [device?.boxId, device?.hookAThreshold, device?.hookBThreshold]);
+
+  // Hold the saved value over repeated old telemetry, but accept a changed
+  // authoritative setting even when telemetry skipped our exact saved pair.
   useEffect(() => {
     if (!device || states[device.boxId] !== 'saved') return;
     const draft = values.current[device.boxId];
-    if (draft && draft.hookA === device.hookAThreshold && draft.hookB === device.hookBThreshold) {
+    const incoming = observed.current[device.boxId];
+    const previous = beforeConfirmation.current[device.boxId];
+    const confirmed = draft && draft.hookA === incoming.hookA && draft.hookB === incoming.hookB;
+    const changed = previous && (previous.hookA !== incoming.hookA || previous.hookB !== incoming.hookB);
+    if (draft && (confirmed || changed)) {
+      delete beforeConfirmation.current[device.boxId];
       delete values.current[device.boxId];
       setDrafts((previous) => {
         const next = { ...previous }; delete next[device.boxId]; return next;

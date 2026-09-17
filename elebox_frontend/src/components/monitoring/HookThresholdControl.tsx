@@ -59,10 +59,10 @@ export const HookThresholdControl = ({
 
   const commitDraft = () => {
     const parsed = Number(draft);
-    const normalized = Number.isFinite(parsed)
-      ? normalizeHookThreshold(parsed)
+    const normalized = draft.trim() !== '' && Number.isFinite(parsed)
+      ? clampHookThreshold(Math.round(parsed))
       : value;
-    onChange(normalized);
+    if (isEditing && normalized !== value) onChange(normalized);
     setDraft(String(normalized));
     setIsEditing(false);
   };
@@ -154,6 +154,7 @@ export const HookThresholdControl = ({
         {label}
       </Typography>
       <Slider
+        aria-label={`${label} threshold slider`}
         value={value}
         min={HOOK_THRESHOLD_MIN}
         max={HOOK_THRESHOLD_MAX}
@@ -194,40 +195,39 @@ export const HookThresholdControl = ({
           value={draft}
           disabled={disabled}
           type="number"
-          variant="standard"
-          onFocus={() => {
+          variant="outlined"
+          size="small"
+          onChange={(event) => {
             setIsEditing(true);
-            setDraft(String(value));
+            setDraft(event.target.value);
           }}
-          onChange={(event) => setDraft(event.target.value)}
           onBlur={commitDraft}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
-              commitDraft();
               (event.target as HTMLInputElement).blur();
             }
           }}
           slotProps={{
             htmlInput: {
+              'aria-label': `${label} threshold`,
               min: HOOK_THRESHOLD_MIN,
               max: HOOK_THRESHOLD_MAX,
-              step: HOOK_THRESHOLD_STEP,
+              step: 1,
               style: { textAlign: 'center' },
             },
           }}
           sx={{
-            width: compact ? 72 : 84,
+            width: compact ? 96 : 112,
+            bgcolor: 'background.paper',
             '& .MuiInputBase-input': {
               fontFamily: monitoringMono,
               fontWeight: 700,
               color: 'primary.main',
               fontSize: compact ? '1.25rem' : '1.4rem',
               lineHeight: 1,
-              py: 0,
+              py: 0.75,
+              px: 1,
             },
-            '& .MuiInput-underline:before': { borderBottom: 'none' },
-            '& .MuiInput-underline:after': { borderBottom: 'none' },
-            '& .MuiInput-underline:hover:not(.Mui-disabled):before': { borderBottom: 'none' },
             '& input[type=number]': {
               MozAppearance: 'textfield',
             },
