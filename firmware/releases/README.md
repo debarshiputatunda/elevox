@@ -1,3 +1,15 @@
+# V7.0.1 hotspot reliability patch
+
+Download [v7.0.1](https://github.com/debarshiputatunda/elevox/releases/tag/v7.0.1): **425408 bytes** (about 415 KiB), below 2 MB.
+
+- Removes long interrupt blocking during LOW hook discharge while preserving all three sensing modes.
+- Starts in AP-only mode, waits 60 seconds before automatic router association, and protects connected/recent hotspot clients from automatic attempts.
+- Turns STA off between failed attempts; explicit Connect remains available.
+- Retains settings and HIGH calibration. LOW calibrations start fresh because timing is now interruptible; recalibrate them if used.
+- Adds Wi-Fi channel/mode and connection-attempt diagnostics.
+
+Build with `firmware/build_v7.sh`. Use the firmware field at `http://192.168.4.1/update`, or USB/serial flashing if the old hotspot cannot sustain an upload. Open **http://192.168.4.1/** manually after reboot. The simulated checks do not establish physical RF stability; see [v7 setup](../../docs/V7_SETUP.md).
+
 # V7.0.0 OTA image
 
 Download the binary and checksum from the [v7.0.0 release](https://github.com/debarshiputatunda/elevox/releases/tag/v7.0.0).

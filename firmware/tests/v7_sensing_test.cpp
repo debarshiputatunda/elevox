@@ -25,8 +25,7 @@ void pinMode(int pin,int mode){
   }
  }
  if(mode==INPUT && modes[pin]==OUTPUT && pin==sensor && !measuring){
-  assert(irq==(expectedMode==0));
-  if(expectedMode!=0)assert(lastEvent=='n');
+  assert(irq);
   measuring=true;started=ticks;
  }
  modes[pin]=mode;lastEvent='p';
@@ -42,7 +41,7 @@ void interrupts(){assert(!irq);irq=true;enables++;lastEvent='i';}
 void yield(){assert(irq);assert(modes[4]==INPUT && modes[5]==INPUT);yields++;measuring=false;sensor=-1;lastEvent='y';}
 struct FakeESP { uint32_t getCycleCount(){ticks+=100;return ticks;} } ESP;
 uint32_t readMask(){
- assert(measuring);assert(irq==(expectedMode==0));
+ assert(measuring);assert(irq);
  int guard=sensor==4?5:4;
  assert(modes[sensor]==INPUT && modes[guard]==OUTPUT);
  assert(latches[guard]==(expectedMode==0?HIGH:LOW));
@@ -64,7 +63,7 @@ static void complete(HookFrameSampler& frame){
   if(i<15)assert(!frame.resultA().valid && !frame.resultB().valid);
  }
  assert(frame.step());assert(yields==32); // A finished frame must not collect more.
- assert(disables==(expectedMode==0?0:32));assert(enables==disables);
+ assert(disables==0);assert(enables==disables);
 }
 int main(){
  assert(validSensingMode(0)&&validSensingMode(1)&&validSensingMode(2));

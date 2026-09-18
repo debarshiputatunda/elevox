@@ -1,4 +1,4 @@
-# V7: selectable hook sensing
+# V7.0.1: selectable hook sensing and hotspot access
 
 V7 retains the v6.2 hotspot, router profiles, threshold synchronization, alarms, prediction/calibration, recording, device name/theme and diagnostics. V6 remains separately available. The active sketch is `firmware/safety_harness_esp8266_v7/safety_harness_esp8266_v7.ino`.
 
@@ -12,7 +12,7 @@ Use **Hook sensing → Save mode** on the device page. The choice is saved acros
 | LOW guard by hook (default) | LOW / ground | A 16 times, then B 16 times | Average successful readings; invalid only if all 16 time out |
 | Alternating LOW guard | LOW / ground | A, B, A, B, repeated 16 times | Same successful-reading average |
 
-Both LOW modes charge the measured pin HIGH for 50 microseconds, disable interrupts, switch it to INPUT, and time its discharge up to 800,000 CPU cycles. Interrupts are restored immediately after the bounded timing window. At the compiled 80 MHz clock the maximum individual discharge wait is 10 ms. This follows the supplied discharge method; it does not imply a 20 ms full frame: 32 saturated readings alone can require roughly 320 ms.
+Both LOW modes charge the measured pin HIGH for 50 microseconds, keep interrupts enabled, switch it to INPUT, and time its discharge up to 800,000 CPU cycles. Wi-Fi interrupts remain serviceable throughout the bounded timing window. At the compiled 80 MHz clock the maximum individual discharge wait is 10 ms. Guard polarity and reading order follow the supplied discharge method; it does not imply a 20 ms full frame: 32 saturated readings alone can require roughly 320 ms.
 
 V6 HIGH mode retains its existing interrupt-enabled discharge timing. In every mode, each main-loop pass takes one individual sample, releases both pins to INPUT, and yields; HTTP, Wi-Fi, buckles and alarms are serviced between readings. A complete A/B frame is published together. LOW guard by hook differs from alternating LOW guard in sample ordering, not polarity.
 
@@ -30,18 +30,30 @@ Prediction tuning controls outside the guided calibration (baseline, link limits
 
 ## Telemetry, CSV and storage
 
-The protocol remains `elevox-v5/1`; `firmware` is `v7.0.0`. New fields are `sensing_mode` (0/1/2), `sensing_name` (`v6-high` / `low-batch` / `low-alternating`) and `sensing_revision` (increments on runtime mode changes). `guard` reports HIGH or LOW. Timeout counters remain visible even when a LOW-mode partial batch yields a valid mean.
+The protocol remains `elevox-v5/1`; `firmware` is `v7.0.1`. New fields are `sensing_mode` (0/1/2), `sensing_name` (`v6-high` / `low-batch` / `low-alternating`) and `sensing_revision` (increments on runtime mode changes). `guard` reports HIGH or LOW. Timeout counters remain visible even when a LOW-mode partial batch yields a valid mean.
 
 POST `/sensing` accepts one form field `mode=0`, `1`, or `2`. Invalid values return 400, active calibration returns 409, failed persistence returns 500. Success returns `{ "saved": true, "mode": 1 }` for the default mode. The existing device page exposes these controls; no separate website/backend change is required by the compatible data contract.
 
 CSV rows include mode provenance so recordings can contain mode comparisons without silently mixing them. The chart clears on a mode transition; existing recorded rows remain. Stream health and diagnostics remain available, with active mode included in diagnostics.
 
-EEPROM uses the existing 2048-byte allocation. Alarm settings, network profiles and device preferences keep their locations. Mode selection uses byte 1216; calibration profiles occupy bytes 1152 (HIGH, compatible with v6), 1280 (LOW by hook) and 1344 (alternating LOW). Each calibration is 48 bytes. The mode record and calibration records are validated before use.
+EEPROM uses the existing 2048-byte allocation. Alarm settings, network profiles and device preferences keep their locations. Mode selection uses byte 1216; calibration profiles occupy bytes 1152 (HIGH, compatible with v6), 1472 (LOW by hook) and 1536 (alternating LOW). Each calibration is 48 bytes. The mode record and calibration records are validated before use.
 
 ## Build and install
 
-Run `firmware/build_v7.sh` with ESP8266 core 3.1.2. It builds a credential-free NodeMCU v2 image at 80 MHz, 4 MB flash / 2 MB filesystem, into `firmware/releases/elevox-v7.0.0.bin` and a SHA-256 file. The script rejects images at or above 1,000,000 bytes, below the requested 2 MB ceiling.
+Run `firmware/build_v7.sh` with ESP8266 core 3.1.2. It builds a credential-free NodeMCU v2 image at 80 MHz, 4 MB flash / 2 MB filesystem, into `firmware/releases/elevox-v7.0.1.bin` and a SHA-256 file. The script rejects images at or above 1,000,000 bytes, below the requested 2 MB ceiling.
 
 Upload the `.bin` through **Firmware update** at `http://192.168.4.1/update`, using the firmware field. The currently flashed device still needs enough OTA free space. Saved network/name/theme/threshold settings remain. Open the hotspot page manually after reboot, select the desired mode, then verify readings, thresholds and optional calibration.
 
 Native GPIO and storage simulations plus browser checks cover digital sequencing and configuration behavior. They do not validate the analog circuit, interrupt timing under real RF traffic, or physical hotspot reliability. A real-device comparison is required before judging which sensing mode works best on the harness.
+
+## Hotspot reliability update (v7.0.1)
+
+V7.0.0 masked interrupts for up to 10 ms per LOW measurement. V7.0.1 removes that mask, preserving grounding and sample order while allowing Wi-Fi interrupts. This addresses a source-level Wi-Fi starvation risk described by the [ESP8266 core](https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#interrupts). LOW readings can include interrupt jitter. Their calibration slots are new, so old LOW calibrations are not applied to the changed timing; recalibrate LOW modes if using prediction. HIGH calibration, alarm thresholds and router profiles remain.
+
+Boot starts the hotspot with the station interface disabled. Automatic router association waits 60 seconds, pauses while an AP client is connected, and waits a further 120 seconds after the last observed client. A queued automatic attempt is rechecked before execution, and a running automatic attempt is stopped if an AP client joins. The station interface is disabled between failed attempts instead of continuing to compete with the hotspot. Explicit Connect/Save & Connect still work immediately and can briefly change the shared radio channel. Disconnect Router saves hotspot-only operation while retaining profiles.
+
+The ESP8266 has one radio channel shared by the hotspot and router connection; see the [core AP documentation](https://arduino-esp8266.readthedocs.io/en/3.1.2/esp8266wifi/soft-access-point-class.html#softap). The update reduces automatic connection interference; it cannot promise simultaneous uninterrupted AP service during every explicit router association.
+
+Diagnostics now include Wi-Fi mode/channel and counters for hotspot starts, router attempts and automatic-attempt cancellations, alongside uptime and reset reason. These help distinguish rebooting from router/channel activity if the physical symptom continues. Firmware compilation and simulated tests are not a physical RF-stability test.
+
+If the old page will not remain reachable for an OTA upload, install the update over USB/serial. After reboot, join the renamed SBox network, remain connected despite its no-internet status, and manually open **http://192.168.4.1/** (HTTP).

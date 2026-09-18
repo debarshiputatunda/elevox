@@ -1,4 +1,8 @@
 #pragma once
+#include "hotspot_policy.h"
+HotspotPolicy hotspotPolicy;
+bool queuedNetworkExplicit=true,activeNetworkExplicit=false;
+uint32_t hotspotStartCount=0,routerAttemptCount=0,automaticAttemptCancelledCount=0;
 void loadRouterWifi(){
   EEPROM.get(256,netStore);
   if(validNetworks(netStore))return;
@@ -21,21 +25,34 @@ bool persistNetworks(NetworkStore candidate){
   }
   netStore=candidate;return true;
 }
-void queueNetwork(int index){
-  queuedNetwork=index;wifiApplyPending=true;wifiQueuedAt=millis();
+void queueNetwork(int index,bool explicitRequest=true){
+  queuedNetwork=index;queuedNetworkExplicit=explicitRequest;
+  wifiApplyPending=true;wifiQueuedAt=millis();
+}
+void cancelAutomaticRouterAttempt(uint32_t now){
+  WiFi.disconnect(true,false); // disable STA; retain AP and saved profiles
+  wifiApplyPending=false;wasStationConnected=false;activeNetworkExplicit=false;
+  wifiRetry.failed(now);automaticAttemptCancelledCount++;
 }
 void applyRouterWifi(){
+  uint32_t now=millis();
+  hotspotPolicy.observe(now,WiFi.softAPgetStationNum()>0);
+  // A phone may associate during the response delay after an auto request queued.
+  if(!queuedNetworkExplicit && !hotspotPolicy.automaticAllowed()){
+    cancelAutomaticRouterAttempt(now);return;
+  }
   WiFi.setAutoReconnect(false);
-  WiFi.disconnect(false); // STA only: never recreate the AP during a router change
-  activeNetwork=queuedNetwork;
+  WiFi.disconnect(true,false);
+  activeNetwork=queuedNetwork;activeNetworkExplicit=queuedNetworkExplicit;
   if(activeNetwork>=0 && activeNetwork<netStore.count && netStore.autoConnect){
     const auto& n=netStore.networks[activeNetwork];
-    WiFi.begin(n.ssid,n.password);wifiRetry.started(millis());
+    WiFi.begin(n.ssid,n.password);wifiRetry.started(now);routerAttemptCount++;
     Serial.printf("[WIFI] Attempt profile %d\n",activeNetwork+1);
-  }else{activeNetwork=-1;wifiRetry.attempting=false;}
+  }else{activeNetwork=-1;wifiRetry.attempting=false;activeNetworkExplicit=false;}
   wifiApplyPending=false;wasStationConnected=false;
 }
 void startHotspot(){
+  hotspotStartCount++;
   WiFi.enableAP(true);
   IPAddress address(192,168,4,1),mask(255,255,255,0);
   bool ok=WiFi.softAPConfig(address,address,mask);
@@ -45,17 +62,24 @@ void startHotspot(){
 }
 void serviceWifi(){
   uint32_t now=millis();
-  if(wifiApplyPending){if((uint32_t)(now-wifiQueuedAt)>=750)applyRouterWifi();return;}
-  if(WiFi.status()==WL_CONNECTED){wifiRetry.connected();wasStationConnected=true;}
-  else if(wasStationConnected){
-    wasStationConnected=false;wifiRetry.failed(now); // allow AP access before retrying a lost router
+  hotspotPolicy.observe(now,WiFi.softAPgetStationNum()>0);
+  if(wifiApplyPending){
+    if(!queuedNetworkExplicit && !hotspotPolicy.automaticAllowed())cancelAutomaticRouterAttempt(now);
+    else if((uint32_t)(now-wifiQueuedAt)>=750)applyRouterWifi();
+  }else if(WiFi.status()==WL_CONNECTED){
+    // An established router connection does not scan; preserve it for AP clients.
+    wifiRetry.connected();wasStationConnected=true;
+  }else if(wifiRetry.attempting && !activeNetworkExplicit && !hotspotPolicy.automaticAllowed()){
+    cancelAutomaticRouterAttempt(now);
+  }else if(wasStationConnected){
+    WiFi.disconnect(true,false);
+    wasStationConnected=false;wifiRetry.failed(now);
   }else if(wifiRetry.timedOut(now)){
-    WiFi.disconnect(false);wifiRetry.failed(now);
+    WiFi.disconnect(true,false);wifiRetry.failed(now);
     Serial.println("[WIFI] Router attempt timed out; AP stays available");
-  }else if(netStore.autoConnect && netStore.count && wifiRetry.ready(now,WiFi.softAPgetStationNum()>0)){
-    // Try default first, then other profiles on failures. Never scan/retry while an AP client is configuring.
+  }else if(netStore.autoConnect && netStore.count && hotspotPolicy.automaticAllowed() && wifiRetry.ready(now,false)){
     int next=wifiRetry.failures==0?netStore.defaultIndex:(activeNetwork+1)%netStore.count;
-    queueNetwork(next);
+    queueNetwork(next,false);
   }
   static uint32_t apChecked=0;
   if((uint32_t)(now-apChecked)>=15000){
@@ -66,11 +90,14 @@ void serviceWifi(){
 void showWifiStatus(){
   bool connected=WiFi.status()==WL_CONNECTED&&!wifiApplyPending;
   const char* state=!netStore.autoConnect||!netStore.count?"hotspot-only":connected?"connected":
-    wifiApplyPending||wifiRetry.attempting?"connecting":WiFi.softAPgetStationNum()>0?"paused":"connection-failed";
+    wifiApplyPending||wifiRetry.attempting?"connecting":hotspotPolicy.startupWaiting()?"startup-wait":
+    !hotspotPolicy.automaticAllowed()?"paused":"connection-failed";
   String json;json.reserve(1400);
   json="{\"status\":"+jsonString(state)+",\"active\":"+String(activeNetwork)+",\"default\":"+String(netStore.defaultIndex);
   json+=",\"auto_connect\":"+String(netStore.autoConnect?"true":"false")+",\"ap_ssid\":"+jsonString(apName.c_str());
   json+=",\"ap_ip\":"+jsonString(WiFi.softAPIP().toString().c_str())+",\"sta_ip\":"+jsonString(connected?WiFi.localIP().toString().c_str():"");
+  json+=",\"channel\":"+String(WiFi.channel())+",\"hotspot_start_count\":"+String(hotspotStartCount);
+  json+=",\"router_attempt_count\":"+String(routerAttemptCount)+",\"automatic_attempt_cancelled_count\":"+String(automaticAttemptCancelledCount);
   json+=",\"profiles\":[";
   for(int i=0;i<netStore.count;i++){
     if(i)json+=',';

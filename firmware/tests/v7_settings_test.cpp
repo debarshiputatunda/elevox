@@ -11,7 +11,7 @@ struct Storage {
 };
 int main(){
  Storage e;assert(loadSensingMode(e)==1);
- assert(calibrationOffset(0)==1152);assert(calibrationOffset(1)!=calibrationOffset(2));
+ assert(calibrationOffset(0)==1152);assert(calibrationOffset(1)!=1280&&calibrationOffset(2)!=1344);assert(calibrationOffset(1)!=calibrationOffset(2));
  assert(calibrationOffset(1)>SENSING_SETTINGS_OFFSET+sizeof(SensingSettings));
  assert(calibrationOffset(2)+48<=2048);
  e.ram[44]=73;e.ram[256]=91;e.ram[1024]=82;e.ram[1152]=55;

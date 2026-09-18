@@ -21,8 +21,8 @@ import hashlib,sys
 source=Path(sys.argv[1]);data=source.read_bytes()
 # 4M2M offers approximately 1019 KiB OTA; enforce a stricter 1,000,000-byte build budget.
 assert len(data)<1_000_000 and len(data)<2_000_000, f'Firmware too large: {len(data)} bytes'
-output=Path(sys.argv[2])/'elevox-v7.0.0.bin'
+output=Path(sys.argv[2])/'elevox-v7.0.1.bin'
 output.write_bytes(data)
-(output.parent/'elevox-v7.0.0.sha256').write_text(hashlib.sha256(data).hexdigest()+'  '+output.name+'\n')
+(output.parent/'elevox-v7.0.1.sha256').write_text(hashlib.sha256(data).hexdigest()+'  '+output.name+'\n')
 print(f'OTA binary: {output}\nSize: {len(data)} bytes (under 2 MB)')
 PY

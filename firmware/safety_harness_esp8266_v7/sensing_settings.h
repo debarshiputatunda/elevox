@@ -28,5 +28,7 @@ template<class Storage> bool saveSensingMode(Storage& storage,uint8_t mode){
  if(storage.commit())return true;
  storage.put(SENSING_SETTINGS_OFFSET,previous);return false;
 }
-inline unsigned calibrationOffset(uint8_t mode){return mode==0?1152:mode==1?1280:1344;}
-static_assert(1344+48<=2048,"Calibration exceeds EEPROM allocation");
+// v7.0.1 LOW timing keeps interrupts enabled: use fresh LOW calibration slots.
+// Old 1280/1344 slots remain intact for downgrade; HIGH calibration is unchanged.
+inline unsigned calibrationOffset(uint8_t mode){return mode==0?1152:mode==1?1472:1536;}
+static_assert(1536+48<=2048,"Calibration exceeds EEPROM allocation");

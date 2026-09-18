@@ -16,7 +16,7 @@
 #include "device_preferences.h"
 #include "prediction_calibration.h"
 using namespace prediction_calibration;
-const char* FIRMWARE_VERSION="v7.0.0";
+const char* FIRMWARE_VERSION="v7.0.1";
 DevicePreferences preferences;
 PredictionCalibration calibration={};
 CalibrationSession calibrationSession;
@@ -372,7 +372,7 @@ void setupEndpoints(){
       "{\"sensing_mode\":%u,\"sensing_name\":\"%s\",\"sensing_revision\":%u,\"device_name\":\"%s\",\"light_mode\":%s,\"sample_seq\":%u,\"sample_uptime_ms\":%u,\"sample_age_ms\":%u,\"uptime_ms\":%u,"
       "\"prediction_calibrated\":%s,\"calibration_mode\":\"%s\",\"calibration_capture_mode\":\"%s\",\"calibration_running\":%s,\"calibration_step\":%u,\"calibration_completed\":%u,\"calibration_remaining_ms\":%u,\"calibration_error\":\"%s\","
       "\"threshold_edit_revision\":%u,\"threshold_edit_pending\":%s,\"threshold_base_a\":%u,\"threshold_base_b\":%u,\"threshold_base_valid\":%s,"
-      "\"protocol\":\"elevox-v5/1\",\"firmware\":\"v7.0.0\",\"mutual_valid\":%s,\"a_timeouts\":%u,\"b_timeouts\":%u,\"id\":\"%s\",\"guard\":\"%s\",\"raw1\":%d,\"raw2\":%d,\"a_p2p\":%u,\"b_p2p\":%u,"
+      "\"protocol\":\"elevox-v5/1\",\"firmware\":\"v7.0.1\",\"mutual_valid\":%s,\"a_timeouts\":%u,\"b_timeouts\":%u,\"id\":\"%s\",\"guard\":\"%s\",\"raw1\":%d,\"raw2\":%d,\"a_p2p\":%u,\"b_p2p\":%u,"
       "\"loadA\":%d,\"loadB\":%d,\"link\":%d,\"hkA\":%u,\"hkB\":%u,\"hkAn\":\"%s\",\"hkBn\":\"%s\","
       "\"batt_pct\":%d,\"batt_v\":%.2f,\"b1\":%s,\"b2\":%s,\"b3\":%s,"
       "\"threshold_a\":%u,\"threshold_b\":%u,\"hook_alarm_enabled\":%s,\"hook_a_valid\":%s,\"hook_b_valid\":%s,\"hookviol\":%s,\"mutual\":%u,\"state\":\"%s\","
@@ -421,13 +421,13 @@ void setup(){
   loadDevicePreferences();
   sensingMode=static_cast<SensingMode>(loadSensingMode(EEPROM));
   loadSensingCalibration();
-  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_AP); // Keep station scans off while the hotspot starts.
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
   WiFi.setAutoReconnect(false);
-  WiFi.disconnect(false); // stop any SDK startup attempt before our bounded scheduler takes over
+  WiFi.disconnect(true,false); // Disable STA; preserve AP and credentials until a requested attempt.
   startHotspot();
   // Automatic association waits until no AP client is configuring. Explicit Connect overrides this.
-  wifiRetry.stamp=millis();wifiRetry.waitMs=5000;
+  wifiRetry.stamp=millis();wifiRetry.waitMs=60000;
   // Do not wait for a router: hotspot and local alarms must work immediately.
   httpUpdater.setup(&server,"/update");
   setupEndpoints();

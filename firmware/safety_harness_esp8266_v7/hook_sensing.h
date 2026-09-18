@@ -58,13 +58,12 @@ public:
     else {digitalWrite(guard,LOW);pinMode(guard,OUTPUT);}
     driveHookHigh(sensor);
     delayMicroseconds(CHARGE_US);
-    // HIGH retains the v6 interrupt behavior. LOW masks only the discharge window.
-    if(mode!=V6_HIGH)noInterrupts();
+    // Keep Wi-Fi interrupts serviceable in every mode, even for a 10 ms timeout.
+    // GPIO polarity/order are unchanged; timings now include interrupt jitter.
     pinMode(sensor,INPUT);
     uint32_t start=ESP.getCycleCount(),current=start;
     while((GPI&(1u<<sensor)) && (current-start<DISCHARGE_CEIL))current=ESP.getCycleCount();
     uint32_t cycles=current-start;
-    if(mode!=V6_HIGH)interrupts();
     releaseHooks(sensor,guard);
     (sampleA?aSamples:bSamples).add(cycles);
     completed++;active=completed<2*HOOK_SAMPLES;

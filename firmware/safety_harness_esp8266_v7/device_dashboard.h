@@ -1,7 +1,7 @@
 #pragma once
 const char INDEX_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>v7.0.0</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>v7.0.1</title>
 <style>
 :root{--bg:#14161A;--pnl:#1C2026;--pnl2:#23282F;--amb:#FFA51F;--stl:#5C6B7A;--txt:#E4E7EB;--mut:#8A949F;--ok:#4ADE6A;--bad:#E8412F;--cy:#3FC1D9;--br:#2E343D;--ln:#3A424D}
 *{box-sizing:border-box}
@@ -68,7 +68,7 @@ header{padding:14px 20px;border-bottom-width:2px;flex-wrap:wrap}header h1{letter
 button,.button{min-height:36px;display:inline-flex;align-items:center;justify-content:center;gap:5px}.button{padding:7px 10px;border:1px solid var(--br);background:var(--field);color:var(--txt);text-decoration:none;font-size:12px}.button:hover{border-color:var(--amb)}button:disabled{opacity:.5;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--cy);outline-offset:2px}.hint{line-height:1.65}.stream{padding:12px 14px;margin-bottom:12px;border-left-color:var(--ok)}.stream.stale{border-left-color:var(--bad)}.stream.stale #streamStatus{color:var(--bad)}#streamStats,#chartTime{font-variant-numeric:tabular-nums}#deviceName{font-weight:700;font-size:15px}#nameInput{width:min(260px,100%)}.step{margin-top:10px;padding:10px;border:1px solid var(--br)}.step p{margin:0 0 8px}.step.done{border-left:3px solid var(--ok)}#chartTime{margin:-5px 0 14px}.net{margin-bottom:14px}.devicebar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}.devicebar details{margin-left:auto}.devicebar form{margin-top:8px}.calhead{margin-bottom:10px}
 @media(max-width:720px){.wrap{padding:12px}header{padding:12px}.devicebar details{margin-left:0;width:100%}.kv{gap:10px}.net{gap:8px}#wifiForm{display:flex;flex-direction:column;align-items:flex-start}#wifiForm input{max-width:100%}.bk .bn{font-size:8px}.bk .bs{font-size:12px}}
 </style></head><body>
-<header><div class="dot" id="conn" aria-label="Connection status"></div><h1>v7.0.0</h1><button id="lightToggle" class="tg" style="margin-left:auto" disabled>LIGHT MODE</button></header>
+<header><div class="dot" id="conn" aria-label="Connection status"></div><h1>v7.0.1</h1><button id="lightToggle" class="tg" style="margin-left:auto" disabled>LIGHT MODE</button></header>
 <div class="wrap">
 <div class="devicebar"><span id="deviceName">Connecting…</span><span class="id" id="devid">-</span><details><summary>Edit device name</summary><form id="nameForm" class="row"><label for="nameInput">Device / hotspot name</label><input id="nameInput" maxlength="32" pattern="[A-Za-z0-9_\-](?:[A-Za-z0-9 _\-]{0,30}[A-Za-z0-9_\-])?" required autocomplete="off"><button id="nameSave" class="pri">SAVE NAME</button></form><p class="hint">1–32 letters, numbers, spaces, hyphens or underscores. No spaces at either end. Renaming also changes the hotspot name.</p></details></div><p id="deviceStatus" role="status"></p>
 <div class="net"><span id="n1">-</span><span id="n2">-</span><span id="n3">-</span></div>
@@ -327,7 +327,7 @@ const h=['Sl.No','Timestamp','Label','HookA_mean','HookB_mean','A_p2p','B_p2p','
 const cell=value=>'"'+String(value??'').replace(/"/g,'""')+'"';const L=[h.map(cell).join(',')];rows.forEach((r,i)=>L.push([i+1,ts(r.t),r.l,r.a,r.b,r.ap,r.bp,r.m,r.k,r.la,r.lb,r.ha,r.hb,r.s,r.b1?'LOCKED':'OPEN',r.b2?'LOCKED':'OPEN',r.b3?'LOCKED':'OPEN',r.av,r.bvalid,r.mv,r.at,r.bt,r.seq,r.uptime,r.predict,r.prediction,r.calibrated,r.reference,r.sensingMode,r.sensingName,r.sensingRevision].map(cell).join(',')));
 downloadBlob(new Blob([L.join('\r\n')],{type:'text/csv;charset=utf-8'}),'harness_'+Date.now()+'.csv')};
 let wifiEpoch=0,wifiInitialized=false,wifiSaving=false,wifiPolling=false,wifiDirty=false,wifiSaveError='',profiles=[],wifiSignature='';
-const wifiText={connected:'Connected to router',connecting:'Connecting (up to 30 seconds)…',paused:'Automatic retry paused while hotspot is in use. Select CONNECT to retry now.',
+const wifiText={'startup-wait':'Hotspot ready. Automatic router connection waits 60 seconds after boot; CONNECT works now.',connected:'Connected to router',connecting:'Connecting (up to 30 seconds)…',paused:'Automatic router retry paused while the hotspot is in use and for 2 minutes afterward. CONNECT works now.',
  'connection-failed':'Router unavailable; retries use 1–5 minute backoff. The hotspot remains available.',
  'hotspot-only':'Router disconnected; saved profiles are retained.'};
 function selectProfile(){

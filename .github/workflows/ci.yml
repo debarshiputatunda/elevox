@@ -47,3 +47,5 @@ jobs:
       - run: g++ -std=c++11 firmware/tests/v7_sensing_test.cpp -o /tmp/v7-sensing-test && /tmp/v7-sensing-test
       - run: g++ -std=c++11 firmware/tests/v7_settings_test.cpp -o /tmp/v7-settings-test && /tmp/v7-settings-test
       - run: g++ -std=c++11 firmware/tests/v7_mode_transition_test.cpp -o /tmp/v7-transition-test && /tmp/v7-transition-test
+      - run: g++ -std=c++11 firmware/tests/v7_hotspot_test.cpp -o /tmp/v7-hotspot-test && /tmp/v7-hotspot-test
+      - run: g++ -std=c++11 firmware/tests/v7_hotspot_runtime_test.cpp -o /tmp/v7-hotspot-runtime-test && /tmp/v7-hotspot-runtime-test
