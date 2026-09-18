@@ -6,6 +6,7 @@ Connected safety-harness monitoring: ESP8266 firmware, a FastAPI/MySQL backend, 
 
 - `elebox_backend/` — REST API, device polling, WebSockets, notifications and MySQL persistence.
 - `elebox_frontend/` — React/TypeScript monitoring and administration UI.
+- `firmware/safety_harness_esp8266_v7/` — selectable HIGH, LOW by hook and alternating LOW sensing; see [v7 setup](docs/V7_SETUP.md).
 - `firmware/safety_harness_esp8266_v6/` — HIGH-guard sensing, saved Wi-Fi profiles and two-way threshold settings; see [v6 setup](docs/V6_SETUP.md).
 - `firmware/safety_harness_esp8266_v5_old_sense/` — integrated v5 firmware, protocol `elevox-v5/1`.
 - `firmware/Elevox/` and other firmware folders — legacy reference versions.

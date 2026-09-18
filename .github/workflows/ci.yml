@@ -44,3 +44,6 @@ jobs:
       - run: g++ -std=c++11 firmware/tests/v6_tuning_test.cpp -o /tmp/tuning-test && /tmp/tuning-test
       - run: g++ -std=c++11 firmware/tests/v6_calibration_test.cpp -o /tmp/calibration-test && /tmp/calibration-test
       - run: g++ -std=c++11 firmware/tests/v6_preferences_test.cpp -o /tmp/preferences-test && /tmp/preferences-test
+      - run: g++ -std=c++11 firmware/tests/v7_sensing_test.cpp -o /tmp/v7-sensing-test && /tmp/v7-sensing-test
+      - run: g++ -std=c++11 firmware/tests/v7_settings_test.cpp -o /tmp/v7-settings-test && /tmp/v7-settings-test
+      - run: g++ -std=c++11 firmware/tests/v7_mode_transition_test.cpp -o /tmp/v7-transition-test && /tmp/v7-transition-test

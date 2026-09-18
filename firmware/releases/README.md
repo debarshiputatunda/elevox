@@ -1,3 +1,16 @@
+# V7.0.0 OTA image
+
+Download the binary and checksum from the [v7.0.0 release](https://github.com/debarshiputatunda/elevox/releases/tag/v7.0.0).
+
+- Binary: `elevox-v7.0.0.bin`, **424112 bytes** (about 414 KiB).
+- Three saved modes: V6 HIGH guard, LOW guard by hook (default), and alternating LOW guard.
+- V6.2 settings/features retained, with separate optional calibration per mode.
+- Target: ESP8266 NodeMCU v2, 80 MHz, 4 MB flash / 2 MB filesystem, core 3.1.2.
+- Build: `firmware/build_v7.sh`; no local router credentials compiled in.
+- Upload via the firmware field at `http://192.168.4.1/update`, then choose **Sensing mode** on the page.
+
+Read [v7 setup](../../docs/V7_SETUP.md) for timeout policy and mode switching. Physical flashing and analog/RF behavior remain unverified. Existing threshold numbers are retained; verify them for the selected mode.
+
 # V6.2.0 OTA image
 
 Download the binary and checksum from the [v6.2.0 release](https://github.com/debarshiputatunda/elevox/releases/tag/v6.2.0), or run `firmware/build_v6.sh` to generate them locally.
