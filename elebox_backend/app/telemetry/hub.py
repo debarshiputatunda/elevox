@@ -25,6 +25,7 @@ class TelemetryHub:
         self.notification_queue: asyncio.Queue = asyncio.Queue(maxsize=10_000)
         self._tasks: list[asyncio.Task] = []
         self._history_last_written: dict[int, float] = {}
+        self.latest_payloads: dict[int, dict] = {}
         self.last_event_at: str | None = None
 
     async def start(self):
@@ -46,6 +47,7 @@ class TelemetryHub:
             except asyncio.CancelledError:
                 pass
         self._tasks.clear()
+        self.latest_payloads.clear()
         logger.info("Telemetry hub stopped")
 
     async def publish_success(self, event: TelemetrySuccessEvent):
@@ -61,6 +63,7 @@ class TelemetryHub:
                 if not isinstance(event, TelemetrySuccessEvent):
                     continue
                 payload = build_ws_payload(event.box, event.reading, event.recorded_at, online=True)
+                self.latest_payloads[event.box_id] = payload
                 await telemetry_ws_manager.broadcast_to_device("telemetry", payload, event.box_id)
                 self.last_event_at = format_iso_utc(event.recorded_at)
                 await self.persistence_queue.put(

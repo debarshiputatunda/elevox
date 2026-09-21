@@ -73,8 +73,8 @@ export const OperationalTelemetryPanel = ({
         </Typography>
       </Box>
 
-      <Box sx={{ p: 1.75, display: 'flex', flexDirection: 'column', gap: 1.25, flex: 1 }}>
-        <Box display="flex" flexDirection="column" gap={0.75}>
+      <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+        <Box display="flex" flexDirection="column" gap={1.5}>
           <HookThresholdControl
             label="Hook A"
             value={hookAThreshold}
@@ -94,8 +94,8 @@ export const OperationalTelemetryPanel = ({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-            gap: 1,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+            gap: 2,
           }}
         >
           <HookSensorCard

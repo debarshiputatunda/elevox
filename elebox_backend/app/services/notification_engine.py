@@ -181,7 +181,9 @@ class NotificationEngine:
         elif not battery_low:
             state.battery_low = False
 
-        esp_reported_alarm = reading.alarm_active == 1
+        esp_reported_alarm = reading.alarm_active == 1 and not (
+            reading.buckle_alarm_enabled is False and reading.alarm_cause == "BUCKLE"
+        )
         if esp_reported_alarm and not state.esp_reported_alarm:
             state.esp_reported_alarm = True
             # Suppress when we just auto-pulsed the alarm ourselves (the pulse path
@@ -251,7 +253,7 @@ class NotificationEngine:
                 state=state,
             )
 
-        buckle_open = any(
+        buckle_open = reading.buckle_alarm_enabled is not False and any(
             is_buckle_open(value)
             for value in (reading.buckle1, reading.buckle2, reading.buckle3)
         )

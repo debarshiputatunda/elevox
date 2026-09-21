@@ -140,6 +140,17 @@ export const sboxService = {
     return mapBackendSBox(data);
   },
 
+  setBuckleAlarm: async (id: number, enabled: boolean): Promise<{ enabled: boolean; confirmed: true; confirmed_at?: string }> => {
+    if (isMockMode()) throw new Error('Device confirmation is unavailable in demo mode.');
+    const { data } = await apiClient.patch<{ enabled: boolean; confirmed: boolean; confirmed_at?: string }>(
+      `/sboxes/${id}/buckle-alarm`, { enabled },
+    );
+    if (data.confirmed !== true || data.enabled !== enabled) {
+      throw new Error('The device did not confirm the buckle alarm setting.');
+    }
+    return { ...data, confirmed: true };
+  },
+
   updateThresholds: async (
     id: number,
     thresholds: Partial<{ hookA: number; hookB: number }>,

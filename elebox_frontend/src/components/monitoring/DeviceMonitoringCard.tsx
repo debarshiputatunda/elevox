@@ -37,14 +37,14 @@ export const DeviceMonitoringCard = ({
   onTriggerAlarm,
 }: DeviceMonitoringCardProps) => (
   <Box>
-    <Card variant="outlined" sx={{ mb: 1.5 }}>
-      <CardContent sx={{ p: { xs: 1.5, md: 2 }, '&:last-child': { pb: { xs: 1.5, md: 2 } } }}>
+    <Card variant="outlined" sx={{ mb: 2 }}>
+      <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            gap: 1.5,
+            gap: 2,
             flexWrap: 'wrap',
           }}
         >
@@ -82,7 +82,7 @@ export const DeviceMonitoringCard = ({
       sx={{
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-        gap: 1.5,
+        gap: 2,
         mb: 1.5,
         '& > *': { minWidth: 0 },
       }}

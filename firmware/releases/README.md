@@ -1,3 +1,14 @@
+# V7.1.0 buckle alarm control
+
+Download [v7.1.0](https://github.com/debarshiputatunda/elevox/releases/tag/v7.1.0): **427,328 bytes**, below 2 MB.
+
+- Saved buckle-alarm ON/OFF control on both the device page and Elevox website; defaults ON.
+- OFF suppresses buckle-triggered alarms while preserving actual buckle readings and independent hook/manual/sensor alarms.
+- Consistent, simplified device UI spacing and website monitoring layout.
+- Existing sensing modes, calibration, thresholds and hotspot behavior retained.
+
+Upload `elevox-v7.1.0.bin` through **Firmware update** at `http://192.168.4.1/update`, then reopen the device page. The website toggle needs this firmware. Build with `firmware/build_v7.sh`; see [setup](../../docs/V7_SETUP.md). Physical device behavior remains unverified.
+
 # V7.0.1 hotspot reliability patch
 
 Download [v7.0.1](https://github.com/debarshiputatunda/elevox/releases/tag/v7.0.1): **425408 bytes** (about 415 KiB), below 2 MB.

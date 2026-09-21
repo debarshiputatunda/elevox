@@ -8,6 +8,8 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import type { TelemetryData } from '@/types';
 import { batteryMuiColor } from '@/constants/monitoringTheme';
 import { HarnessVisualization } from '@/components/monitoring/HarnessVisualization';
+import { BuckleAlarmControl } from '@/components/monitoring/BuckleAlarmControl';
+import { usePermission } from '@/hooks/usePermission';
 import { isHookExceeded } from '@/utils/hookThreshold';
 
 interface HardwareIntegrityPanelProps {
@@ -27,6 +29,7 @@ export const HardwareIntegrityPanel = ({
   hookAThreshold,
   hookBThreshold,
 }: HardwareIntegrityPanelProps) => {
+  const { can } = usePermission();
   const isOffline = !device.isOnline;
   const alarmActive = Boolean(device.alarmActive);
   const batteryColor = batteryMuiColor(device.batteryLevel);
@@ -67,10 +70,10 @@ export const HardwareIntegrityPanel = ({
 
       <Box
         sx={{
-          p: 1.25,
+          p: 2,
           display: 'flex',
           flexDirection: 'column',
-          gap: 1,
+          gap: 2,
           flex: 1,
           minWidth: 0,
           overflowX: 'hidden',
@@ -91,6 +94,8 @@ export const HardwareIntegrityPanel = ({
           lastUpdated={device.lastUpdated}
           batteryVoltage={device.batteryVoltage}
         />
+
+        <BuckleAlarmControl key={device.boxId} device={device} canManage={can('sboxes.manage')} />
 
         <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
           {canTriggerAlarm && (

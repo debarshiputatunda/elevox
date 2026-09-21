@@ -26,11 +26,10 @@ export const SafetyModeControl = () => {
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1} mb={1}>
           <Box>
             <Typography variant="subtitle1" fontWeight={700} mb={0.5}>
-              Safety Mode
+              Browser buckle siren
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Arms the browser siren across all {deviceCount > 0 ? `${deviceCount} ` : ''}S-Box
-              {deviceCount === 1 ? '' : 'es'} when any buckle opens on live telemetry.
+              Local audio for {deviceCount > 0 ? `${deviceCount} ` : ''}Elevox devices with buckle alarms enabled. Device alarm settings are controlled in Monitoring.
             </Typography>
           </Box>
           <Chip
@@ -52,7 +51,7 @@ export const SafetyModeControl = () => {
         </Button>
         {safetyModeEnabled && (
           <Typography variant="caption" color="warning.main" fontWeight={600} display="block" mt={1.5}>
-            Monitoring all connected S-Boxes. Siren will sound on any unlatched buckle.
+            Browser audio is armed. Devices with their buckle alarm off are excluded.
           </Typography>
         )}
       </CardContent>

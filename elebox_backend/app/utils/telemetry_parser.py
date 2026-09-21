@@ -32,6 +32,7 @@ class TelemetryReading:
     threshold_base_a: int | None = None
     threshold_base_b: int | None = None
     threshold_base_valid: bool = False
+    buckle_alarm_enabled: bool | None = None
 
 
 def _integer(value, name, minimum, maximum):
@@ -114,6 +115,8 @@ def parse_telemetry(payload: str) -> TelemetryReading:
             device_threshold_b=_integer(data['threshold_b'], 'threshold_b', 0, 100000) if managed else None,
             hook_alarm_enabled=_boolean(data['hook_alarm_enabled'], 'hook_alarm_enabled') if managed else False,
             threshold_sync='pending' if managed else 'unsupported', device_id=data['id'],
+            buckle_alarm_enabled=_boolean(data['buckle_alarm_enabled'], 'buckle_alarm_enabled')
+                if 'buckle_alarm_enabled' in data else None,
             **edit_metadata)
     except (KeyError, TypeError) as exc:
         raise ValueError('Incomplete device telemetry') from exc

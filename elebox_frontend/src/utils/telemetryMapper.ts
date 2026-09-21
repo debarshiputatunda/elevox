@@ -17,6 +17,7 @@ export interface BackendTelemetrySnapshot {
   buckle3: number;
   alarm_active: boolean;
   alarm_cause?: string;
+  buckle_alarm_enabled?: boolean | null;
   firmware_protocol?: string;
   hook_a_valid?: boolean;
   hook_b_valid?: boolean;
@@ -96,6 +97,7 @@ export const mapBackendTelemetry = (data: BackendTelemetrySnapshot): TelemetryDa
   buckleStatus: resolveBuckleStatus(data.buckle1, data.buckle2, data.buckle3),
   alarmActive: data.alarm_active,
   alarmCause: data.alarm_cause,
+  buckleAlarmEnabled: data.buckle_alarm_enabled ?? null,
   firmwareProtocol: data.firmware_protocol,
   hookAValid: data.hook_a_valid ?? data.hook_a >= 0,
   hookBValid: data.hook_b_valid ?? data.hook_b >= 0,

@@ -10,13 +10,14 @@
 #include <DNSServer.h>
 #include "config.h"
 #include "alarm_logic.h"
+#include "buckle_alarm_settings.h"
 #include "wifi_settings.h"
 #include "network_profiles.h"
 #include "threshold_settings.h"
 #include "device_preferences.h"
 #include "prediction_calibration.h"
 using namespace prediction_calibration;
-const char* FIRMWARE_VERSION="v7.0.1";
+const char* FIRMWARE_VERSION="v7.1.0";
 DevicePreferences preferences;
 PredictionCalibration calibration={};
 CalibrationSession calibrationSession;
@@ -84,7 +85,7 @@ bool buckleState[3]={true,true,true}, lastReading[3]={true,true,true};
 unsigned long debounceTime[3]={0,0,0};
 const int DEBOUNCE_MS=50;
 
-enum AlarmMode { ALARM_NONE, ALARM_MANUAL, ALARM_HOOK, ALARM_BUCKLE, ALARM_SENSOR };
+bool buckleAlarmEnabled=true;
 AlarmMode curMode=ALARM_NONE;
 uint8_t patIdx=0;
 unsigned long patStamp=0, lastBuzzerToggle=0, buckleAlarmStart=0;
@@ -286,8 +287,10 @@ bool parseThresholdArg(const char* name, uint32_t& value){
 
 #include "tuning_transaction.h"
 #include "device_runtime.h"
+#include "buckle_alarm_runtime.h"
 
 void setupEndpoints(){
+  server.on("/buckle-alarm",HTTP_POST,setBuckleAlarm);
   server.on("/sensing",HTTP_POST,saveSensingSelection);
   server.on("/device",HTTP_POST,saveDevicePreferences);
   server.on("/calibration",HTTP_POST,handleCalibration);
@@ -372,10 +375,10 @@ void setupEndpoints(){
       "{\"sensing_mode\":%u,\"sensing_name\":\"%s\",\"sensing_revision\":%u,\"device_name\":\"%s\",\"light_mode\":%s,\"sample_seq\":%u,\"sample_uptime_ms\":%u,\"sample_age_ms\":%u,\"uptime_ms\":%u,"
       "\"prediction_calibrated\":%s,\"calibration_mode\":\"%s\",\"calibration_capture_mode\":\"%s\",\"calibration_running\":%s,\"calibration_step\":%u,\"calibration_completed\":%u,\"calibration_remaining_ms\":%u,\"calibration_error\":\"%s\","
       "\"threshold_edit_revision\":%u,\"threshold_edit_pending\":%s,\"threshold_base_a\":%u,\"threshold_base_b\":%u,\"threshold_base_valid\":%s,"
-      "\"protocol\":\"elevox-v5/1\",\"firmware\":\"v7.0.1\",\"mutual_valid\":%s,\"a_timeouts\":%u,\"b_timeouts\":%u,\"id\":\"%s\",\"guard\":\"%s\",\"raw1\":%d,\"raw2\":%d,\"a_p2p\":%u,\"b_p2p\":%u,"
+      "\"protocol\":\"elevox-v5/1\",\"firmware\":\"v7.1.0\",\"mutual_valid\":%s,\"a_timeouts\":%u,\"b_timeouts\":%u,\"id\":\"%s\",\"guard\":\"%s\",\"raw1\":%d,\"raw2\":%d,\"a_p2p\":%u,\"b_p2p\":%u,"
       "\"loadA\":%d,\"loadB\":%d,\"link\":%d,\"hkA\":%u,\"hkB\":%u,\"hkAn\":\"%s\",\"hkBn\":\"%s\","
       "\"batt_pct\":%d,\"batt_v\":%.2f,\"b1\":%s,\"b2\":%s,\"b3\":%s,"
-      "\"threshold_a\":%u,\"threshold_b\":%u,\"hook_alarm_enabled\":%s,\"hook_a_valid\":%s,\"hook_b_valid\":%s,\"hookviol\":%s,\"mutual\":%u,\"state\":\"%s\","
+      "\"threshold_a\":%u,\"threshold_b\":%u,\"hook_alarm_enabled\":%s,\"buckle_alarm_enabled\":%s,\"hook_a_valid\":%s,\"hook_b_valid\":%s,\"hookviol\":%s,\"mutual\":%u,\"state\":\"%s\","
       "\"ema\":%s,\"alpha\":%u,\"predict\":%s,\"msh\":%u,\"mbr\":%u,\"hd\":%u,\"gain\":%u,"
       "\"baseA\":%u,\"baseB\":%u,\"pb\":%u,\"ph\":%u,\"pm\":%u,"
       "\"buzz\":%s,\"vol\":%u,\"passive\":%s,"
@@ -392,7 +395,7 @@ void setupEndpoints(){
       (int)loadA,(int)loadB,(int)linkIdx,(unsigned)hkA,(unsigned)hkB,hkName(hkA),hkName(hkB),
       battPercent,battVoltage,
       (!buckleState[0])?"true":"false",(!buckleState[1])?"true":"false",(!buckleState[2])?"true":"false",
-      thresholdA,thresholdB,hookAlarmEnabled?"true":"false",hookA.valid?"true":"false",hookB.valid?"true":"false", hookViolation?"true":"false",(unsigned)mutualAB, predictionName(),
+      thresholdA,thresholdB,hookAlarmEnabled?"true":"false",buckleAlarmEnabled?"true":"false",hookA.valid?"true":"false",hookB.valid?"true":"false", hookViolation?"true":"false",(unsigned)mutualAB, predictionName(),
       emaOn?"true":"false",(unsigned)emaAlphaPct,predictOn?"true":"false",
       (unsigned)mutShortMax,(unsigned)mutBridgeMax,(unsigned)hookDelta,(unsigned)gain,
       (unsigned)baseA,(unsigned)baseB,(unsigned)patBuckle,(unsigned)patHook,(unsigned)patManual,
@@ -414,6 +417,7 @@ void setup(){
   pinMode(LED_PIN,OUTPUT); pinMode(BUZZER_PIN,OUTPUT);
   digitalWrite(LED_PIN,LOW); digitalWrite(BUZZER_PIN,LOW);
   loadConfig();
+  buckleAlarmEnabled=loadBuckleAlarm(EEPROM);
   loadRouterWifi();
   WiFi.persistent(false);
   snprintf(MDNS_NAME,sizeof(MDNS_NAME),"sbox-%06x",ESP.getChipId());
@@ -493,7 +497,7 @@ void loop(){
   bool anyOpen=updateBuckles();
   if(alarmActive && pulseExpired(now,alarmStartTime)) alarmActive=false;
 
-  AlarmMode want=anyOpen?ALARM_BUCKLE:(!hookA.valid||!hookB.valid)?ALARM_SENSOR:hookViolation?ALARM_HOOK:alarmActive?ALARM_MANUAL:ALARM_NONE;
+  AlarmMode want=selectAlarmMode(anyOpen,buckleAlarmEnabled,hookA.valid&&hookB.valid,hookViolation,alarmActive);
   if(want!=curMode){
     curMode=want; patIdx=0; patStamp=now; lastBuzzerToggle=now; buckleAlarmStart=now;
     if(want==ALARM_NONE) buzzOff(); else buzzOn(freqFor(want));

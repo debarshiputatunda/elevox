@@ -13,6 +13,8 @@ from app.schemas.box_assignment_schema import (
 )
 from app.schemas.sbox_schema import (
     MessageResponse,
+    SBoxBuckleAlarmRequest,
+    SBoxBuckleAlarmResponse,
     SBoxCreateRequest,
     SBoxResponse,
     SBoxStatusUpdateRequest,
@@ -263,3 +265,13 @@ def list_sbox_logs(
         page=page,
         page_size=page_size,
     )
+
+
+@router.patch("/{box_id}/buckle-alarm", response_model=SBoxBuckleAlarmResponse)
+async def update_sbox_buckle_alarm(
+    box_id: int,
+    request: SBoxBuckleAlarmRequest,
+    db: Session = Depends(get_db),
+    _current_user=Depends(require_permission(Permission.SBOXES_MANAGE)),
+):
+    return await SboxService.update_buckle_alarm(db, box_id, request.enabled)

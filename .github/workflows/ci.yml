@@ -49,3 +49,5 @@ jobs:
       - run: g++ -std=c++11 firmware/tests/v7_mode_transition_test.cpp -o /tmp/v7-transition-test && /tmp/v7-transition-test
       - run: g++ -std=c++11 firmware/tests/v7_hotspot_test.cpp -o /tmp/v7-hotspot-test && /tmp/v7-hotspot-test
       - run: g++ -std=c++11 firmware/tests/v7_hotspot_runtime_test.cpp -o /tmp/v7-hotspot-runtime-test && /tmp/v7-hotspot-runtime-test
+      - run: g++ -std=c++11 firmware/tests/v7_buckle_alarm_test.cpp -o /tmp/v7-buckle-test && /tmp/v7-buckle-test
+      - run: g++ -std=c++11 firmware/tests/v7_buckle_runtime_test.cpp -o /tmp/v7-buckle-runtime-test && /tmp/v7-buckle-runtime-test

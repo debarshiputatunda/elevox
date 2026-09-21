@@ -1,11 +1,14 @@
 from datetime import date, datetime, timezone
 
+import httpx
+
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.telemetry_config import (
     ACTIVE_ACTIVITY_STATUS_ID,
+    TELEMETRY_REQUEST_TIMEOUT_S,
     INACTIVE_ACTIVITY_STATUS_ID,
     TELEMETRY_OFFLINE_THRESHOLD_S,
 )
@@ -14,9 +17,40 @@ from app.models.box_details import BoxDetail
 from app.repositories.role_repository import RoleRepository
 from app.repositories.sbox_repository import SboxRepository
 from app.utils.datetime_utils import format_iso_utc, utc_now_naive
+from app.utils.esp_client import normalize_esp_base_url
 
 
 class SboxService:
+
+    @staticmethod
+    async def update_buckle_alarm(db: Session, box_id: int, enabled: bool):
+        box = SboxRepository.get_by_id(db, box_id)
+        if box is None:
+            raise HTTPException(404, "Elevox not found")
+        if not box.box_ip or not box.box_ip.strip():
+            raise HTTPException(409, "Elevox has no device address")
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{normalize_esp_base_url(box.box_ip)}/buckle-alarm",
+                    data={"enabled": "1" if enabled else "0"},
+                    timeout=TELEMETRY_REQUEST_TIMEOUT_S,
+                )
+                if response.status_code in (404, 405, 501):
+                    raise HTTPException(409, "Device firmware does not support buckle alarm control")
+                response.raise_for_status()
+                saved = response.json()
+                # Legacy firmware can return HTTP 200 for unknown paths. Only a
+                # strict, durable acknowledgment from the dedicated API counts.
+                if (not isinstance(saved, dict) or saved.get("saved") is not True
+                        or saved.get("enabled") is not enabled):
+                    raise HTTPException(502, "Device did not confirm the saved buckle alarm setting")
+        except httpx.RequestError as exc:
+            raise HTTPException(503, "Device is unreachable; buckle alarm setting was not confirmed") from exc
+        except (httpx.HTTPStatusError, ValueError) as exc:
+            raise HTTPException(502, "Device did not confirm the saved buckle alarm setting") from exc
+        return {"enabled": enabled, "confirmed": True,
+                "confirmed_at": datetime.now(timezone.utc).isoformat()}
 
     @staticmethod
     def _get_role_names(db: Session, user_id: int) -> set[str]:

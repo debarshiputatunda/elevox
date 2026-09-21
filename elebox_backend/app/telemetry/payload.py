@@ -33,6 +33,7 @@ def build_ws_payload(
         "buckle1": reading.buckle1,
         "buckle2": reading.buckle2,
         "buckle3": reading.buckle3,
+        "buckle_alarm_enabled": reading.buckle_alarm_enabled,
         "alarm_active": reading.alarm_active == 1,
         "alarm_cause": reading.alarm_cause,
         "firmware_protocol": reading.protocol,

@@ -1,4 +1,4 @@
-# V7.0.1: selectable hook sensing and hotspot access
+# V7.1.0: buckle alarm control and selectable sensing
 
 V7 retains the v6.2 hotspot, router profiles, threshold synchronization, alarms, prediction/calibration, recording, device name/theme and diagnostics. V6 remains separately available. The active sketch is `firmware/safety_harness_esp8266_v7/safety_harness_esp8266_v7.ino`.
 
@@ -30,7 +30,7 @@ Prediction tuning controls outside the guided calibration (baseline, link limits
 
 ## Telemetry, CSV and storage
 
-The protocol remains `elevox-v5/1`; `firmware` is `v7.0.1`. New fields are `sensing_mode` (0/1/2), `sensing_name` (`v6-high` / `low-batch` / `low-alternating`) and `sensing_revision` (increments on runtime mode changes). `guard` reports HIGH or LOW. Timeout counters remain visible even when a LOW-mode partial batch yields a valid mean.
+The protocol remains `elevox-v5/1`; `firmware` is `v7.1.0`. New fields are `sensing_mode` (0/1/2), `sensing_name` (`v6-high` / `low-batch` / `low-alternating`) and `sensing_revision` (increments on runtime mode changes). `guard` reports HIGH or LOW. Timeout counters remain visible even when a LOW-mode partial batch yields a valid mean.
 
 POST `/sensing` accepts one form field `mode=0`, `1`, or `2`. Invalid values return 400, active calibration returns 409, failed persistence returns 500. Success returns `{ "saved": true, "mode": 1 }` for the default mode. The existing device page exposes these controls; no separate website/backend change is required by the compatible data contract.
 
@@ -40,7 +40,7 @@ EEPROM uses the existing 2048-byte allocation. Alarm settings, network profiles 
 
 ## Build and install
 
-Run `firmware/build_v7.sh` with ESP8266 core 3.1.2. It builds a credential-free NodeMCU v2 image at 80 MHz, 4 MB flash / 2 MB filesystem, into `firmware/releases/elevox-v7.0.1.bin` and a SHA-256 file. The script rejects images at or above 1,000,000 bytes, below the requested 2 MB ceiling.
+Run `firmware/build_v7.sh` with ESP8266 core 3.1.2. It builds a credential-free NodeMCU v2 image at 80 MHz, 4 MB flash / 2 MB filesystem, into `firmware/releases/elevox-v7.1.0.bin` and a SHA-256 file. The script rejects images at or above 1,000,000 bytes, below the requested 2 MB ceiling.
 
 Upload the `.bin` through **Firmware update** at `http://192.168.4.1/update`, using the firmware field. The currently flashed device still needs enough OTA free space. Saved network/name/theme/threshold settings remain. Open the hotspot page manually after reboot, select the desired mode, then verify readings, thresholds and optional calibration.
 
@@ -57,3 +57,13 @@ The ESP8266 has one radio channel shared by the hotspot and router connection; s
 Diagnostics now include Wi-Fi mode/channel and counters for hotspot starts, router attempts and automatic-attempt cancellations, alongside uptime and reset reason. These help distinguish rebooting from router/channel activity if the physical symptom continues. Firmware compilation and simulated tests are not a physical RF-stability test.
 
 If the old page will not remain reachable for an OTA upload, install the update over USB/serial. After reboot, join the renamed SBox network, remain connected despite its no-internet status, and manually open **http://192.168.4.1/** (HTTP).
+
+## Buckle alarm control (v7.1.0)
+
+Use **Buckle alarms** in the device page's Buckle Status section or the website's Hardware Integrity panel. The setting defaults ON and is saved on the device across reboots. OFF prevents open buckles from triggering the device alarm, website buckle siren, and buckle-open notifications. Actual OPEN/CLOSED readings remain visible; hook, sensor and manual alarms remain independent. Re-enabling while a buckle is open restores the buckle alarm.
+
+The website requires device-management permission and an online device with compatible firmware. A save is confirmed only after the device acknowledges persistence; offline, unsupported and failed writes show an error instead of claiming success. Old firmware retains its existing behavior until upgraded.
+
+Device POST `/buckle-alarm` accepts form `enabled=0` or `enabled=1` and returns `{ "saved": true, "enabled": false }` when disabling succeeds. Website PATCH `/sboxes/{id}/buckle-alarm` accepts JSON `{ "enabled": false }`. Telemetry and diagnostics expose `buckle_alarm_enabled`. A validated 12-byte EEPROM record at offset 1664 defaults ON when absent or corrupt. No database migration is required.
+
+The device UI uses consistent spacing, simple borders and warm light/dark colors without external assets. Source tests, mocked browser checks and compilation pass; physical alarm behavior and RF stability still require device validation.

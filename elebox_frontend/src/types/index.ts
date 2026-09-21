@@ -184,6 +184,7 @@ export interface TelemetryData {
   buckleStatus: 'secured' | 'unsecured' | 'unknown';
   alarmActive?: boolean;
   alarmCause?: string;
+  buckleAlarmEnabled?: boolean | null;
   firmwareProtocol?: string;
   hookAValid?: boolean;
   hookBValid?: boolean;

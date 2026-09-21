@@ -1,6 +1,6 @@
 from datetime import date
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
 
 class SBoxCreateRequest(BaseModel):
@@ -61,3 +61,14 @@ class SBoxResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class SBoxBuckleAlarmRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: StrictBool
+
+
+class SBoxBuckleAlarmResponse(BaseModel):
+    enabled: bool
+    confirmed: bool
+    confirmed_at: str

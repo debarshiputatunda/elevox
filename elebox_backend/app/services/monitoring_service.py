@@ -10,6 +10,7 @@ from app.repositories.notification_repository import NotificationRepository
 from app.repositories.sbox_repository import SboxRepository
 from app.repositories.telemetry_repository import TelemetryRepository
 from app.telemetry.orchestrator import telemetry_orchestrator
+from app.telemetry.hub import telemetry_hub
 from app.utils.datetime_utils import format_iso_utc, utc_now_naive
 from app.utils.telemetry_parser import raw_hook_to_percent
 
@@ -40,7 +41,7 @@ class MonitoringService:
         recorded_at = MonitoringService._format_ts(
             snapshot.recorded_at if snapshot else box.last_seen,
         )
-        return {
+        response = {
             "box_id": box.box_id,
             "device_id": box.box_id,
             "controller_name": MonitoringService._controller_name(box),
@@ -55,6 +56,7 @@ class MonitoringService:
             "buckle1": snapshot.buckle1 if snapshot else 0,
             "buckle2": snapshot.buckle2 if snapshot else 0,
             "buckle3": snapshot.buckle3 if snapshot else 0,
+            "buckle_alarm_enabled": None,
             "alarm_active": bool(snapshot.alarm_active) if snapshot else False,
             "connectivity": "online" if is_online else "offline",
             "is_online": is_online,
@@ -64,6 +66,20 @@ class MonitoringService:
             "work_area_name": SboxRepository.get_work_area_name(db, box.work_area_id),
             "recorded_at": recorded_at or format_iso_utc(utc_now_naive()),
         }
+
+        # Device-owned settings are not persisted as website configuration.
+        # Use a fresh live packet as a unit so its setting and timestamp agree.
+        live = telemetry_hub.latest_payloads.get(box.box_id)
+        if live and live.get("ip_address") == box.box_ip and is_online:
+            recorded = datetime.fromisoformat(live["recorded_at"])
+            if recorded.tzinfo is None:
+                recorded = recorded.replace(tzinfo=timezone.utc)
+            age = (datetime.now(timezone.utc) - recorded).total_seconds()
+            if 0 <= age <= TELEMETRY_OFFLINE_THRESHOLD_S:
+                response.update(live)
+                response["hook_a_threshold"] = box.hookA_threshold
+                response["hook_b_threshold"] = box.hookB_threshold
+        return response
 
     @staticmethod
     def list_latest_telemetry(db: Session):

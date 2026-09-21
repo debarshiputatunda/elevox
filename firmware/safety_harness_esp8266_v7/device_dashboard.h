@@ -1,74 +1,24 @@
 #pragma once
 const char INDEX_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>v7.0.1</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>v7.1.0</title>
 <style>
-:root{--bg:#14161A;--pnl:#1C2026;--pnl2:#23282F;--amb:#FFA51F;--stl:#5C6B7A;--txt:#E4E7EB;--mut:#8A949F;--ok:#4ADE6A;--bad:#E8412F;--cy:#3FC1D9;--br:#2E343D;--ln:#3A424D}
-*{box-sizing:border-box}
-body{margin:0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--bg);color:var(--txt);font-size:13px}
-header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--pnl);border-bottom:3px solid var(--amb);position:sticky;top:0;z-index:9}
-header h1{font-size:15px;margin:0;font-weight:700;letter-spacing:3px}
-.dot{width:8px;height:8px;background:var(--bad)}.dot.on{background:var(--ok)}
-.id{color:var(--mut);font-size:11px}
-.wrap{padding:14px;max-width:900px;margin:0 auto}
-.strip{height:6px;background:repeating-linear-gradient(45deg,var(--amb),var(--amb) 10px,#14161A 10px,#14161A 20px);margin-bottom:14px}
-.net{font-size:11px;color:var(--mut);margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap}
-.box{background:var(--pnl);border:1px solid var(--br);border-left:3px solid var(--stl)}
-.box h2{font-size:10px;margin:0;padding:7px 12px;background:var(--pnl2);color:var(--amb);letter-spacing:2px;font-weight:700;border-bottom:1px solid var(--br)}
-.box .bd{padding:12px}
-.state{padding:18px 12px;text-align:center;margin-bottom:12px;border-left-width:6px}
-.state .lbl{font-size:10px;letter-spacing:3px;color:var(--mut)}
-.state .v{font-size:36px;font-weight:700;letter-spacing:2px;margin:6px 0 3px}
-.state .exp{font-size:11px;color:var(--mut)}
-.state.free{border-left-color:var(--ok)}.state.free .v{color:var(--ok)}
-.state.human{border-left-color:var(--amb)}.state.human .v{color:var(--amb)}
-.state.short{border-left-color:var(--cy)}.state.short .v{color:var(--cy)}
-.state.contact{border-left-color:var(--stl)}.state.contact .v{color:var(--stl)}
-.state.off{opacity:.4}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.mtr{padding:10px 12px}
-.mtr .t{font-size:10px;color:var(--mut);letter-spacing:1.5px;display:flex;justify-content:space-between}
-.mtr .n{font-size:26px;font-weight:700;margin:3px 0}
-.mtr .s{font-size:10px;color:var(--mut)}
-.trk{height:8px;background:#0E1013;margin-top:6px;position:relative;overflow:hidden}
-.fl{height:100%;transition:width .18s}
-.tag{font-size:9px;padding:2px 6px;letter-spacing:1px;font-weight:700}
-.t-ok{background:rgba(74,222,106,.15);color:var(--ok)}.t-amb{background:rgba(255,165,31,.15);color:var(--amb)}
-.t-cy{background:rgba(63,193,217,.15);color:var(--cy)}.t-mut{background:#23282F;color:var(--mut)}
-.bkrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.bk{padding:10px 6px;text-align:center;border:1px solid var(--br);background:#0E1013}
-.bk .bn{font-size:9px;color:var(--mut);letter-spacing:1px}
-.bk .bs{font-size:14px;font-weight:700;margin-top:3px}
-.bk.lk{border-color:rgba(74,222,106,.4)}.bk.lk .bs{color:var(--ok)}
-.bk.op{border-color:var(--bad);background:rgba(232,65,47,.1)}.bk.op .bs{color:var(--bad)}
-canvas{width:100%;height:160px;background:var(--pnl);border:1px solid var(--br);display:block;margin-bottom:12px}
-.kv{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--mut)}
-.kv b{color:var(--txt)}
-.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-input,select,button{font:inherit;font-size:12px;padding:7px 10px;border:1px solid var(--br);background:#0E1013;color:var(--txt);border-radius:0}
-input{width:92px}input[type=range]{width:130px;padding:0}
-button{cursor:pointer}button:hover{border-color:var(--amb)}
-.pri{background:var(--amb);color:#14161A;border:none;font-weight:700}
-.tg{font-weight:700;letter-spacing:1px}
-.tg.on{background:rgba(74,222,106,.15);border-color:var(--ok);color:var(--ok)}
-.tg.off{color:var(--mut)}
-.hint{color:var(--mut);font-size:11px;margin-top:8px;line-height:1.5}
-.ab{display:none;padding:9px;text-align:center;font-weight:700;letter-spacing:3px;margin-bottom:12px}
-.ab-b{background:var(--bad);color:#fff}.ab-h{background:var(--amb);color:#14161A}.ab-s{background:#E8412F;color:white}.ab-m{background:var(--cy);color:#14161A}
-.chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
-.chip{padding:5px 10px;border:1px solid var(--br);background:#0E1013;font-size:11px;cursor:pointer}
-.chip.on{background:var(--amb);color:#14161A;border-color:var(--amb);font-weight:700}
-@media(max-width:720px){.g3,.g2{grid-template-columns:1fr}.state .v{font-size:26px}}
-a{color:var(--amb)}[hidden]{display:none!important}input[type=number]{font-variant-numeric:tabular-nums}#predictionDetails{margin-top:8px}
-
-:root{--field:#101419;--ok:#6dd58a;--mut:#a1acb8}
-body.light{--bg:#edf1f4;--pnl:#fff;--pnl2:#e8edf2;--amb:#8c5000;--stl:#586d7f;--txt:#17232e;--mut:#526474;--ok:#14743a;--bad:#bd3023;--cy:#00768d;--br:#cbd4dd;--ln:#b6c4d0;--field:#f5f8fa}
-header{padding:14px 20px;border-bottom-width:2px;flex-wrap:wrap}header h1{letter-spacing:1px;font-size:16px}.dot{border-radius:50%}.wrap{max-width:1040px;padding:20px}.strip{display:none}.box{border-radius:4px;overflow:hidden}.box h2{font-size:11px;padding:10px 14px;letter-spacing:1.4px}.box .bd{padding:14px}.state{padding:14px}.state.off{opacity:1}.g2,.g3{gap:12px}.mtr{padding:15px}.mtr .n{font-size:30px}.trk,.bk,input,select,button,.chip{background:var(--field)}.t-mut{background:var(--pnl2)}.pri,.chip.on{background:var(--amb);color:var(--pnl)}
-button,.button{min-height:36px;display:inline-flex;align-items:center;justify-content:center;gap:5px}.button{padding:7px 10px;border:1px solid var(--br);background:var(--field);color:var(--txt);text-decoration:none;font-size:12px}.button:hover{border-color:var(--amb)}button:disabled{opacity:.5;cursor:default}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--cy);outline-offset:2px}.hint{line-height:1.65}.stream{padding:12px 14px;margin-bottom:12px;border-left-color:var(--ok)}.stream.stale{border-left-color:var(--bad)}.stream.stale #streamStatus{color:var(--bad)}#streamStats,#chartTime{font-variant-numeric:tabular-nums}#deviceName{font-weight:700;font-size:15px}#nameInput{width:min(260px,100%)}.step{margin-top:10px;padding:10px;border:1px solid var(--br)}.step p{margin:0 0 8px}.step.done{border-left:3px solid var(--ok)}#chartTime{margin:-5px 0 14px}.net{margin-bottom:14px}.devicebar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}.devicebar details{margin-left:auto}.devicebar form{margin-top:8px}.calhead{margin-bottom:10px}
-@media(max-width:720px){.wrap{padding:12px}header{padding:12px}.devicebar details{margin-left:0;width:100%}.kv{gap:10px}.net{gap:8px}#wifiForm{display:flex;flex-direction:column;align-items:flex-start}#wifiForm input{max-width:100%}.bk .bn{font-size:8px}.bk .bs{font-size:12px}}
+:root{--bg:#141413;--pnl:#1e1e1b;--pnl2:#292923;--field:#171714;--amb:#e2bf29;--stl:#a1adb7;--txt:#faf9f5;--mut:#b1b1a8;--ok:#6dd58a;--bad:#ff8275;--cy:#77ccda;--br:#3b3b34;--ln:#55554a}
+body.light{--bg:#faf9f5;--pnl:#fff;--pnl2:#f0efea;--field:#faf9f5;--amb:#c98a1e;--stl:#586775;--txt:#141413;--mut:#64645b;--ok:#14743a;--bad:#bd3023;--cy:#00768d;--br:#deded5;--ln:#bdbdb2}
+*{box-sizing:border-box}body{margin:0;font:14px/1.5 Arial,Helvetica,sans-serif;background:var(--bg);color:var(--txt)}
+header{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:12px 24px;background:var(--pnl);border-bottom:1px solid var(--br);position:sticky;top:0;z-index:9}header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.5px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--bad)}.dot.on{background:var(--ok)}.id{color:var(--mut);font-size:12px}.wrap{max-width:1040px;margin:auto;padding:24px}.net,.devicebar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}.net{font-size:12px;color:var(--mut)}.devicebar details{margin-left:auto}.devicebar form{margin-top:8px}summary{cursor:pointer}#deviceName{font-weight:700;font-size:16px}#nameInput{width:min(260px,100%)}
+.box{background:var(--pnl);border:1px solid var(--br);border-radius:6px;overflow:hidden;min-width:0}.box h2{font-size:12px;letter-spacing:.8px;font-weight:700;margin:0;padding:12px 16px;background:var(--pnl2);border-bottom:1px solid var(--br)}.box .bd{padding:16px}.state{padding:16px;text-align:center;margin-bottom:16px}.state .lbl{font-size:12px;letter-spacing:1px;color:var(--mut)}.state .v{font-size:32px;font-weight:700;margin:8px 0 4px}.state .exp{font-size:14px;color:var(--mut)}.state.free .v{color:var(--ok)}.state.human .v{color:var(--amb)}.state.short .v{color:var(--cy)}.state.contact .v{color:var(--stl)}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:16px}.g2{columns:2;column-gap:16px}.g2>.box{break-inside:avoid;margin-bottom:16px}.mtr{padding:16px}.mtr .t{font-size:12px;color:var(--mut);display:flex;justify-content:space-between;gap:8px}.mtr .n{font:700 32px/1.3 ui-monospace,SFMono-Regular,Consolas,monospace;margin:4px 0}.mtr .s{font-size:12px;color:var(--mut)}.trk{height:8px;background:var(--field);margin-top:8px;overflow:hidden;border-radius:4px}.fl{height:100%;transition:width .15s}.tag{font-size:11px;padding:0 4px;font-weight:700}.t-ok{color:var(--ok)}.t-amb{color:var(--amb)}.t-cy{color:var(--cy)}.t-mut{background:var(--pnl2);color:var(--mut)}
+.bkrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.bk{padding:12px 8px;text-align:center;border:1px solid var(--br);background:var(--field);border-radius:4px}.bk .bn{font-size:12px;color:var(--mut)}.bk .bs{font-size:14px;font-weight:700;margin-top:4px}.bk.lk .bs{color:var(--ok)}.bk.op{border-color:var(--bad)}.bk.op .bs{color:var(--bad)}.alarm-setting{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid var(--br)}.alarm-setting .hint{margin:4px 0 0}.alarm-setting button{flex-shrink:0}
+canvas{width:100%;height:160px;background:var(--pnl);border:1px solid var(--br);border-radius:4px;display:block}.kv{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0;color:var(--mut)}.kv b{color:var(--txt)}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select,button,.button{font:inherit;min-height:44px;padding:8px 12px;border:1px solid var(--br);background:var(--field);color:var(--txt);border-radius:4px;max-width:100%}input{width:92px}input[type=range]{width:130px;padding:0;accent-color:var(--amb)}input[type=checkbox]{min-height:0}input[type=number]{font-variant-numeric:tabular-nums}button,.button{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none}button:hover,.button:hover{border-color:var(--amb)}button:disabled{opacity:.5;cursor:default}.pri,.chip.on{background:var(--amb);color:#141413;border-color:var(--amb);font-weight:700}.tg{font-weight:700}.tg.on{border-color:var(--ok);color:var(--ok)}.tg.off{color:var(--mut)}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+.hint{color:var(--mut);font-size:12px;line-height:1.5;margin-top:8px}p{margin:8px 0}p:empty,.hint:empty{display:none}.ab{display:none;padding:12px;text-align:center;font-weight:700;letter-spacing:1px;margin-bottom:16px;border-radius:4px}.ab-b,.ab-s{background:#bd3023;color:#fff}.ab-h{background:var(--amb);color:#141413}.ab-m{background:var(--cy);color:#141413}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chip{padding:8px 12px;min-height:44px;border:1px solid var(--br);background:var(--field);font-size:12px;cursor:pointer;border-radius:4px}
+a{color:var(--amb)}body.light a:not(.button){color:#8c5e12}[hidden]{display:none!important}#predictionDetails{margin-top:8px}.stream{padding:16px;margin-bottom:16px;border-left:3px solid var(--ok)}.stream.stale{border-left-color:var(--bad)}.stream.stale #streamStatus{color:var(--bad)}#streamStats,#chartTime{font-variant-numeric:tabular-nums}#chartTime{margin:8px 0 16px}.step{margin-top:12px;padding:12px;border:1px solid var(--br);border-radius:4px}.step p{margin:0 0 8px}.step.done{border-left:3px solid var(--ok)}.calhead{margin:0 0 12px}#wifiForm{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#wifiAddresses{overflow-wrap:anywhere}
+@media(max-width:720px){header{padding:12px 16px}.wrap{padding:16px}.g3{grid-template-columns:1fr}.g2{columns:1}.devicebar details{margin-left:0;width:100%}.net{gap:8px}.state .v{font-size:28px}.bkrow{gap:8px}.bk .bn{font-size:11px}#wifiForm{align-items:stretch;flex-direction:column}#wifiForm input{width:100%!important}#wifiForm input[type=checkbox]{width:auto!important}.alarm-setting{align-items:flex-start}.alarm-setting button{min-width:64px}}
+@media(prefers-reduced-motion:reduce){.fl{transition:none}}
 </style></head><body>
-<header><div class="dot" id="conn" aria-label="Connection status"></div><h1>v7.0.1</h1><button id="lightToggle" class="tg" style="margin-left:auto" disabled>LIGHT MODE</button></header>
+<header><div class="dot" id="conn" aria-label="Connection status"></div><h1>v7.1.0</h1><button id="lightToggle" class="tg" style="margin-left:auto" disabled>LIGHT MODE</button></header>
 <div class="wrap">
 <div class="devicebar"><span id="deviceName">Connecting…</span><span class="id" id="devid">-</span><details><summary>Edit device name</summary><form id="nameForm" class="row"><label for="nameInput">Device / hotspot name</label><input id="nameInput" maxlength="32" pattern="[A-Za-z0-9_\-](?:[A-Za-z0-9 _\-]{0,30}[A-Za-z0-9_\-])?" required autocomplete="off"><button id="nameSave" class="pri">SAVE NAME</button></form><p class="hint">1–32 letters, numbers, spaces, hyphens or underscores. No spaces at either end. Renaming also changes the hotspot name.</p></details></div><p id="deviceStatus" role="status"></p>
 <div class="net"><span id="n1">-</span><span id="n2">-</span><span id="n3">-</span></div>
@@ -88,11 +38,11 @@ button,.button{min-height:36px;display:inline-flex;align-items:center;justify-co
 <div class="trk"><div class="fl" id="bF" style="width:0;background:var(--stl)"></div></div></div>
 </div>
 
-<div class="box" style="margin-bottom:12px"><h2>BUCKLE STATUS</h2><div class="bd"><div class="bkrow">
+<div class="box" style="margin-bottom:16px"><h2>BUCKLE STATUS</h2><div class="bd"><div class="bkrow">
 <div class="bk" id="k1"><div class="bn">BUCKLE 1</div><div class="bs" id="s1">-</div></div>
 <div class="bk" id="k2"><div class="bn">BUCKLE 2</div><div class="bs" id="s2">-</div></div>
 <div class="bk" id="k3"><div class="bn">BUCKLE 3</div><div class="bs" id="s3">-</div></div>
-</div></div></div>
+</div><div class="alarm-setting"><div><strong>Buckle alarm</strong><p class="hint" id="buckleAlarmHint">Waiting for saved setting…</p></div><button id="buckleAlarmToggle" class="tg" role="switch" aria-checked="true" aria-label="Buckle alarm" aria-describedby="buckleAlarmHint" disabled>ON</button></div><p id="buckleAlarmStatus" class="hint" role="status" aria-live="polite"></p></div></div>
 
 <canvas id="ch" width="880" height="160" aria-label="Hook A and B recent readings"></canvas><p class="hint" id="chartTime">Waiting for sensor samples…</p>
 
@@ -101,7 +51,7 @@ button,.button{min-height:36px;display:inline-flex;align-items:center;justify-co
 <div class="kv"><span>BATTERY</span><b><span id="bt">-</span>% / <span id="bv">-</span>V</b></div>
 <div class="kv"><span>ALARM</span><b id="md">-</b></div>
 <div class="kv"><span>FREE HEAP</span><b id="hp">-</b></div>
-<div class="row" style="margin-top:10px"><button id="bBeep">TEST BEEP</button><a class='button' href='/update'>FIRMWARE UPDATE</a></div>
+<div class="row" style="margin-top:12px"><button id="bBeep">TEST BEEP</button><a class='button' href='/update'>FIRMWARE UPDATE</a></div>
 </div></div>
 
 <div class="box"><h2>BUZZER</h2><div class="bd">
@@ -135,7 +85,7 @@ button,.button{min-height:36px;display:inline-flex;align-items:center;justify-co
 <div class="step" id="step1"><p>1 · FREE — Leave both hooks separate, untouched and away from metal.</p><button id="calReady1">READY · CAPTURE FREE (5s)</button></div>
 <div class="step" id="step2"><p id="instructionA">2 · HOOK A — Touch only Hook A with your hand. Leave Hook B free.</p><button id="calReady2" disabled>READY · CAPTURE A (5s)</button></div>
 <div class="step" id="step3"><p id="instructionB">3 · HOOK B — Touch only Hook B with your hand. Leave Hook A free.</p><button id="calReady3" disabled>READY · CAPTURE B (5s)</button></div>
-<div class="row" style="margin-top:10px"><button id="calCancel">CANCEL CAPTURE</button><button id="calClear">USE DEFAULTS</button></div><p class="hint">References describe electrical response only; they cannot prove fastening or identify every material. Ambiguous readings remain UNKNOWN.</p></div></div>
+<div class="row" style="margin-top:12px"><button id="calCancel">CANCEL CAPTURE</button><button id="calClear">USE DEFAULTS</button></div><p class="hint">References describe electrical response only; they cannot prove fastening or identify every material. Ambiguous readings remain UNKNOWN.</p></div></div>
 <div class="box" id="classifierBox"><h2>CLASSIFIER LIMITS</h2><div class="bd">
 <div class="row"><span class="hint" style="margin:0;width:52px">strong&lt;</span><input type="number" id="mSh"><span class="hint" style="margin:0;width:52px">weak&lt;</span><input type="number" id="mBr"><button class="pri" id="bMut">SET</button></div>
 <div class="row" style="margin-top:8px"><span class="hint" style="margin:0;width:88px">hook delta</span><input type="number" id="hd"><button class="pri" id="bHd">SET</button></div>
@@ -148,11 +98,11 @@ button,.button{min-height:36px;display:inline-flex;align-items:center;justify-co
 <div class="chips" id="chips"></div><p class="hint" id="recordStatus">Up to 10,000 fresh samples per recording buffer. Unchanged readings are included. Recording continues while hidden, but browsers may throttle background tabs; gaps cannot be recovered.</p>
 </div></div>
 </div>
-<div class="box" style="margin:12px 0"><h2>ROUTER WI-FI</h2><div class="bd">
+<div class="box" style="margin:16px 0"><h2>ROUTER WI-FI</h2><div class="bd">
 <p id="wifiAddresses">Hotspot: http://192.168.4.1 — no hotspot password required.</p>
 <div class="row"><select id="wifiProfiles" aria-label="Saved router networks"><option value="">New network</option></select>
 <button id="wifiConnect">CONNECT</button><button id="wifiDefault">SET DEFAULT</button><button id="wifiDelete">DELETE</button></div>
-<form id="wifiForm" style="margin-top:10px">
+<form id="wifiForm" style="margin-top:12px">
 <label for="wifiSsid">Router SSID</label><input id="wifiSsid" name="ssid" maxlength="32" autocomplete="off" style="width:180px" required>
 <label for="wifiPassword">Router password</label><input id="wifiPassword" name="password" type="text" maxlength="64" autocomplete="off" style="width:180px" placeholder="Blank for open Wi-Fi">
 <label><input id="wifiMakeDefault" type="checkbox" style="width:auto"> Default</label>
@@ -172,7 +122,18 @@ async function deviceFetch(url,options={}){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),4500);
  try{const response=await fetch(url,{...options,signal:controller.signal});const body=await response.text();return {ok:response.ok,status:response.status,json:async()=>JSON.parse(body),text:async()=>body}}finally{clearTimeout(timer)}
 }
-let settingsEpoch=0;
+let settingsEpoch=0,buckleSaving=false;
+function showBuckleAlarm(enabled){
+ const button=$('buckleAlarmToggle');button.textContent=enabled?'ON':'OFF';button.className='tg '+(enabled?'on':'off');button.setAttribute('aria-checked',String(enabled));button.disabled=buckleSaving;
+ $('buckleAlarmHint').textContent=enabled?'Open buckles can trigger the local alarm.':'Local buckle alarm is off. Buckle readings remain live; other alarm settings still apply.';
+}
+$('buckleAlarmToggle').onclick=async()=>{
+ if(buckleSaving||!D)return;const previous=D.buckle_alarm_enabled,enabled=!previous;
+ buckleSaving=true;settingsEpoch++;showBuckleAlarm(enabled);$('buckleAlarmStatus').textContent='Saving…';
+ try{const response=await deviceFetch('/buckle-alarm',{method:'POST',body:new URLSearchParams({enabled:enabled?'1':'0'})});if(!response.ok)throw Error(await response.text());const result=await response.json();if(result.saved!==true||typeof result.enabled!=='boolean')throw Error('Invalid device response');D.buckle_alarm_enabled=result.enabled;$('buckleAlarmStatus').textContent='Saved on device.';}
+ catch(e){D.buckle_alarm_enabled=previous;$('buckleAlarmStatus').textContent='Not saved: '+e.message;}
+ finally{settingsEpoch++;buckleSaving=false;showBuckleAlarm(D.buckle_alarm_enabled);tick()}
+};
 let limitDirty=false,limitSaving=false,limitRevision=0,limitSavedTarget=null;
 function showLimits(d){
  if(!limitDirty && !limitSaving){$('limitA').value=d.threshold_a;$('limitB').value=d.threshold_b;limitRevision=d.threshold_edit_revision}
@@ -261,13 +222,13 @@ const colors=getComputedStyle(document.body);cx.strokeStyle=colors.getPropertyVa
 const pl=(z,c)=>{cx.beginPath();cx.strokeStyle=c;cx.lineWidth=2;z.forEach((v,i)=>{const x=X(i),y=Y(v);i?cx.lineTo(x,y):cx.moveTo(x,y)});cx.stroke()};
 pl(A,colors.getPropertyValue('--amb'));pl(B,colors.getPropertyValue('--stl'));
 cx.fillStyle=colors.getPropertyValue('--mut');cx.font='10px monospace';cx.fillText(Math.round(mx),5,12);cx.fillText(Math.round(mn),5,h-5)}
-async function tick(){if(busy||sensingSaving||(document.hidden&&!rec))return;busy=true;const epoch=settingsEpoch;
+async function tick(){if(busy||sensingSaving||buckleSaving||(document.hidden&&!rec))return;busy=true;const epoch=settingsEpoch;
 try{const response=await deviceFetch('/data',{cache:'no-store'});if(!response.ok)throw Error('HTTP '+response.status);const d=await response.json();if(epoch!==settingsEpoch)return;
 const now=performance.now(),restarted=lastResponse&&d.uptime_ms<lastUptime,key=d.sample_seq+':'+d.sample_uptime_ms,fresh=key!==lastSampleKey||restarted;
 const sensingChanged=lastResponse&&(d.sensing_mode!==D.sensing_mode||d.sensing_revision!==D.sensing_revision);
 if(restarted||sensingChanged){A=[];B=[];M=[];draw();$('chartTime').textContent='Mode changed or device restarted · waiting for a new sensor sample…'}lastResponse=now;sampleAge=Number(d.sample_age_ms)||0;lastUptime=d.uptime_ms;responseCount++;lastError='';if(fresh){lastSampleSeen=now;lastSampleKey=key;sampleCount++}D=d;freshStatus();
 $('deviceName').textContent=d.device_name;if(!nameDirty&&!deviceSaving)$('nameInput').value=d.device_name;
-if(!deviceSaving){document.body.classList.toggle('light',!!d.light_mode);$('lightToggle').textContent=d.light_mode?'DARK MODE':'LIGHT MODE';$('lightToggle').disabled=false}showCalibration(d);showSensing(d);
+if(!deviceSaving){document.body.classList.toggle('light',!!d.light_mode);$('lightToggle').textContent=d.light_mode?'DARK MODE':'LIGHT MODE';$('lightToggle').disabled=false}showCalibration(d);showSensing(d);showBuckleAlarm(d.buckle_alarm_enabled);
 $('devid').textContent=d.id;$('gL').textContent='GUARD '+d.guard;
 $('n1').textContent=d.sta_up?'LAN '+d.sta_ip+' '+d.rssi+'dBm':'LAN OFFLINE';
 $('n2').textContent='AP '+d.ap_ip;$('n3').textContent=d.host;

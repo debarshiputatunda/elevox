@@ -18,6 +18,7 @@ class TelemetrySnapshotResponse(BaseModel):
     buckle1: int
     buckle2: int
     buckle3: int
+    buckle_alarm_enabled: bool | None = None
     alarm_active: bool
     connectivity: str
     is_online: bool

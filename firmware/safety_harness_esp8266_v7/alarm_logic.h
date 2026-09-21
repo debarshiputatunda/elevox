@@ -12,3 +12,8 @@ inline float smoothHook(float previous, int32_t raw, uint8_t alphaPercent){
   float alpha=alphaPercent/100.0f;
   return alpha*(float)raw+(1.0f-alpha)*previous;
 }
+
+enum AlarmMode { ALARM_NONE, ALARM_MANUAL, ALARM_HOOK, ALARM_BUCKLE, ALARM_SENSOR };
+inline AlarmMode selectAlarmMode(bool buckleOpen,bool buckleEnabled,bool hooksValid,bool hookViolation,bool manual){
+ return buckleEnabled&&buckleOpen?ALARM_BUCKLE:!hooksValid?ALARM_SENSOR:hookViolation?ALARM_HOOK:manual?ALARM_MANUAL:ALARM_NONE;
+}

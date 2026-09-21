@@ -69,6 +69,8 @@ export const useSafetyMonitor = () => {
 
       if (
         safetyModeEnabled
+        && device.buckleAlarmEnabled !== false
+        && device.isOnline
         && initializedRef.current
         && hasOpenBuckle(device.buckle1, device.buckle2, device.buckle3)
       ) {
