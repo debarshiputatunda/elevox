@@ -57,6 +57,7 @@ interface HookInfoCardProps {
   config: HookConfig;
   currentLoad?: number;
   threshold?: number;
+  invalid?: boolean;
   exceeded?: boolean;
   isOffline?: boolean;
   isSelected?: boolean;
@@ -68,13 +69,14 @@ export const HookInfoCard = ({
   config,
   currentLoad,
   threshold,
+  invalid = false,
   exceeded = false,
   isOffline,
   isSelected = false,
   lastUpdated,
   onSelect,
 }: HookInfoCardProps) => {
-  const state = getHookState(isOffline, exceeded);
+  const state = getHookState(isOffline, exceeded, invalid || currentLoad == null || currentLoad < 0);
   const isExceeded = state === 'open';
   const isNormal = state === 'fastened';
   const accent = isExceeded ? 'error' : isNormal ? 'success' : 'grey';

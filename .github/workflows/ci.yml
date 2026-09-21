@@ -53,3 +53,4 @@ jobs:
       - run: g++ -std=c++11 firmware/tests/v7_buckle_runtime_test.cpp -o /tmp/v7-buckle-runtime-test && /tmp/v7-buckle-runtime-test
       - run: g++ -std=c++11 firmware/tests/v7_hook_ranges_test.cpp -o /tmp/v7-ranges-test && /tmp/v7-ranges-test
       - run: g++ -std=c++11 firmware/tests/v7_hook_ranges_runtime_test.cpp -o /tmp/v7-ranges-runtime-test && /tmp/v7-ranges-runtime-test
+      - run: g++ -std=c++11 firmware/tests/v7_measurement_status_test.cpp -o /tmp/v7-measurement-test && /tmp/v7-measurement-test

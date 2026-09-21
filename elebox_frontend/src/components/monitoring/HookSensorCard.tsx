@@ -17,6 +17,11 @@ interface HookSensorCardProps {
   label: string;
   rangeMode?: boolean;
   rawValue?: number;
+  valid?: boolean;
+  observedValue?: number;
+  timeouts?: number;
+  sampleCount?: number;
+  timeoutCycles?: number;
   currentLoad: number;
   threshold: number;
   exceeded: boolean;
@@ -37,6 +42,11 @@ export const HookSensorCard = ({
   label,
   rangeMode = false,
   rawValue,
+  valid,
+  observedValue,
+  timeouts,
+  sampleCount = 16,
+  timeoutCycles = 800000,
   currentLoad,
   threshold,
   exceeded,
@@ -44,10 +54,13 @@ export const HookSensorCard = ({
   lastUpdated,
 }: HookSensorCardProps) => {
   const theme = useTheme();
-  const statusLabel = isOffline ? 'OFFLINE' : exceeded ? (rangeMode ? 'HOOK ALARM' : 'EXCEEDED') : 'NORMAL';
-  const statusBg = isOffline ? 'action.selected' : exceeded ? 'error.light' : 'success.light';
-  const statusColor = isOffline ? 'text.secondary' : exceeded ? 'error.dark' : 'success.dark';
-  const pulseColor = isOffline ? 'text.disabled' : exceeded ? 'error.main' : 'success.main';
+  const invalid = valid === false || currentLoad < 0 || !Number.isFinite(currentLoad);
+  const allTimeout = invalid && timeouts === sampleCount;
+  const observed = observedValue != null && Number.isFinite(observedValue) && observedValue >= 0 ? observedValue : undefined;
+  const statusLabel = isOffline ? 'OFFLINE' : invalid ? 'INVALID' : exceeded ? (rangeMode ? 'HOOK ALARM' : 'EXCEEDED') : 'NORMAL';
+  const statusBg = isOffline ? 'action.selected' : invalid ? 'warning.light' : exceeded ? 'error.light' : 'success.light';
+  const statusColor = isOffline ? 'text.secondary' : invalid ? 'warning.dark' : exceeded ? 'error.dark' : 'success.dark';
+  const pulseColor = isOffline ? 'text.disabled' : invalid ? 'warning.main' : exceeded ? 'error.main' : 'success.main';
   const showExceeded = !isOffline && exceeded;
   const thresholdColor = theme.palette.mode === 'dark' ? '#90CAF9' : '#1E3E62';
 
@@ -103,7 +116,7 @@ export const HookSensorCard = ({
         }}
       >
         <Box sx={{ textAlign: 'center', px: 0.5 }}>
-          <Typography sx={columnLabelSx}>{rangeMode ? 'Smoothed reading' : 'Current Load'}</Typography>
+          <Typography sx={columnLabelSx}>{invalid ? (allTimeout ? 'Timeout bound (cycles)' : 'Observed mean (cycles)') : rangeMode ? 'Smoothed reading' : 'Current Load'}</Typography>
           <Typography
             fontFamily={monitoringMono}
             fontWeight={700}
@@ -111,7 +124,7 @@ export const HookSensorCard = ({
             lineHeight={1}
             color={isOffline ? 'text.disabled' : showExceeded ? 'error.main' : 'primary.main'}
           >
-            {isOffline ? '—' : currentLoad}
+            {isOffline ? '—' : invalid ? (allTimeout ? `≥${timeoutCycles}` : observed ?? '—') : currentLoad}
           </Typography>
         </Box>
 
@@ -130,7 +143,7 @@ export const HookSensorCard = ({
             lineHeight={1}
             color={thresholdColor}
           >
-            {rangeMode ? (isOffline ? '—' : rawValue ?? '—') : threshold}
+            {rangeMode ? (isOffline || invalid ? '—' : rawValue ?? '—') : threshold}
           </Typography>
         </Box>
 
@@ -178,6 +191,12 @@ export const HookSensorCard = ({
           </Typography>
         </Box>
       </Box>
+      {invalid && !isOffline && (
+        <Typography variant="caption" color="warning.main" display="block" sx={{ px: 1.5, pb: 1.5 }}>
+          {allTimeout ? 'Timeout — no finite reading' : observed !== undefined ? 'Partial/invalid observation' : 'Invalid — no finite reading'}
+          {' · '}Timeouts: {timeouts ?? 'unknown'}/{sampleCount}. Diagnostic only.
+        </Typography>
+      )}
     </Box>
   );
 };

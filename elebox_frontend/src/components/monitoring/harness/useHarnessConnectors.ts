@@ -160,6 +160,8 @@ interface UseHarnessConnectorsOptions {
   buckle2?: number;
   buckle3?: number;
   isOffline?: boolean;
+  hookAInvalid?: boolean;
+  hookBInvalid?: boolean;
   hookAExceeded?: boolean;
   hookBExceeded?: boolean;
 }
@@ -169,6 +171,8 @@ export const useHarnessConnectors = ({
   buckle2,
   buckle3,
   isOffline,
+  hookAInvalid = false,
+  hookBInvalid = false,
   hookAExceeded = false,
   hookBExceeded = false,
 }: UseHarnessConnectorsOptions) => {
@@ -298,7 +302,7 @@ export const useHarnessConnectors = ({
   const getLineColor = (key: HarnessPointerKey) => {
     if (isHookKey(key)) {
       const exceeded = key === 'hookA' ? hookAExceeded : hookBExceeded;
-      return CONNECTOR_COLOR[getHookState(isOffline, exceeded)];
+      return CONNECTOR_COLOR[getHookState(isOffline, exceeded, key === 'hookA' ? hookAInvalid : hookBInvalid)];
     }
     return CONNECTOR_COLOR[getBuckleState(values[key], isOffline)];
   };

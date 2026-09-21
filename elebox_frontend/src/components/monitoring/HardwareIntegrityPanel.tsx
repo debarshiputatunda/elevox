@@ -85,6 +85,8 @@ export const HardwareIntegrityPanel = ({
           buckle1={device.buckle1}
           buckle2={device.buckle2}
           buckle3={device.buckle3}
+          hookAInvalid={device.hookAValid === false || device.hookAValue < 0}
+          hookBInvalid={device.hookBValid === false || device.hookBValue < 0}
           hookAValue={device.hookAValue}
           hookBValue={device.hookBValue}
           hookAThreshold={device.hookAlarmRanges ? undefined : hookAThreshold}

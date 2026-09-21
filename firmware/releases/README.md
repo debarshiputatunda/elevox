@@ -1,3 +1,14 @@
+# V7.2.1 sensing readout visibility
+
+Download [v7.2.1](https://github.com/debarshiputatunda/elevox/releases/tag/v7.2.1): **435,840 bytes**, below 2 MB.
+
+- Link Index and active guard now reach the website and remain visible independently of prediction.
+- HIGH guard shows finite partial means or a qualified ≥800,000-cycle timeout instead of unexplained blank values. Invalid readings remain excluded from hook alarm decisions.
+- Coupling diagnostics distinguish waiting, passive-reset timeout, no-rise timeout and below-resolution measurements. Failed measurements do not produce a numeric Link Index.
+- Sensing polarity, hook timeout/validity rules, ranges, buckle control, saved settings and calibration retained.
+
+Flash the `.bin` through Firmware update and refresh both interfaces. A sustained HIGH input still requires physical investigation; this release exposes the measured condition and does not claim to resolve the circuit. See [setup](../../docs/V7_SETUP.md).
+
 # V7.2.0 dual alarm ranges and faster updates
 
 Download [v7.2.0](https://github.com/debarshiputatunda/elevox/releases/tag/v7.2.0): **433,328 bytes**, below 2 MB.

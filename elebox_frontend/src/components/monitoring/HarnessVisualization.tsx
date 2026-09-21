@@ -45,6 +45,8 @@ interface HarnessVisualizationProps {
   hookBValue?: number;
   hookAThreshold?: number;
   hookBThreshold?: number;
+  hookAInvalid?: boolean;
+  hookBInvalid?: boolean;
   hookAExceeded?: boolean;
   hookBExceeded?: boolean;
   isOffline?: boolean;
@@ -71,6 +73,8 @@ export const HarnessVisualization = ({
   hookBValue,
   hookAThreshold,
   hookBThreshold,
+  hookAInvalid = false,
+  hookBInvalid = false,
   hookAExceeded = false,
   hookBExceeded = false,
   isOffline,
@@ -116,6 +120,8 @@ export const HarnessVisualization = ({
     buckle2,
     buckle3,
     isOffline,
+    hookAInvalid,
+    hookBInvalid,
     hookAExceeded,
     hookBExceeded,
   });
@@ -359,6 +365,7 @@ export const HarnessVisualization = ({
                 config={hookConfigByKey.hookA}
                 currentLoad={hookAValue}
                 threshold={hookAThreshold}
+                invalid={hookAInvalid}
                 exceeded={hookAExceeded}
                 isOffline={isOffline}
                 lastUpdated={lastUpdated}
@@ -456,6 +463,7 @@ export const HarnessVisualization = ({
                   >
                     <Harness3DView
                       values={values}
+                      hookInvalid={{ hookA: hookAInvalid, hookB: hookBInvalid }}
                       hookExceeded={{ hookA: hookAExceeded, hookB: hookBExceeded }}
                       isOffline={isOffline}
                       lastUpdated={lastUpdated}
@@ -524,6 +532,7 @@ export const HarnessVisualization = ({
                 config={hookConfigByKey.hookB}
                 currentLoad={hookBValue}
                 threshold={hookBThreshold}
+                invalid={hookBInvalid}
                 exceeded={hookBExceeded}
                 isOffline={isOffline}
                 lastUpdated={lastUpdated}
@@ -585,6 +594,7 @@ export const HarnessVisualization = ({
                 config={hookConfigByKey.hookA}
                 currentLoad={hookAValue}
                 threshold={hookAThreshold}
+                invalid={hookAInvalid}
                 exceeded={hookAExceeded}
                 isOffline={isOffline}
                 lastUpdated={lastUpdated}
@@ -600,6 +610,7 @@ export const HarnessVisualization = ({
                 config={hookConfigByKey.hookB}
                 currentLoad={hookBValue}
                 threshold={hookBThreshold}
+                invalid={hookBInvalid}
                 exceeded={hookBExceeded}
                 isOffline={isOffline}
                 lastUpdated={lastUpdated}

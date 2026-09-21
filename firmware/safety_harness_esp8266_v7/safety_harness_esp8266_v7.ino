@@ -18,7 +18,7 @@
 #include "device_preferences.h"
 #include "prediction_calibration.h"
 using namespace prediction_calibration;
-const char* FIRMWARE_VERSION="v7.2.0";
+const char* FIRMWARE_VERSION="v7.2.1";
 DevicePreferences preferences;
 PredictionCalibration calibration={};
 CalibrationSession calibrationSession;
@@ -70,6 +70,7 @@ ESP8266HTTPUpdateServer httpUpdater;
 #include "sensing_settings.h"
 const unsigned long SENSE_PERIOD_MS = 50;
 bool mutualValid=false;
+bool sensingHasFrame=false;
 HookFrameSampler hookSampler;
 SensingMode sensingMode=LOW_BATCH;
 uint32_t sensingRevision=0;
@@ -354,10 +355,10 @@ void setupEndpoints(){
     char ranges[240];rangeJson(ranges,sizeof(ranges),hookRanges);
     static char buf[3000];
     snprintf(buf,sizeof(buf),
-      "{%s,\"hook_raw_a\":%d,\"hook_raw_b\":%d,\"sensing_mode\":%u,\"sensing_name\":\"%s\",\"sensing_revision\":%u,\"device_name\":\"%s\",\"light_mode\":%s,\"sample_seq\":%u,\"sample_uptime_ms\":%u,\"sample_age_ms\":%u,\"uptime_ms\":%u,"
+      "{%s,\"mutual_status\":\"%s\",\"hook_observed_a\":%d,\"hook_observed_b\":%d,\"hook_sample_count\":%u,\"hook_timeout_cycles\":%u,\"hook_raw_a\":%d,\"hook_raw_b\":%d,\"sensing_mode\":%u,\"sensing_name\":\"%s\",\"sensing_revision\":%u,\"device_name\":\"%s\",\"light_mode\":%s,\"sample_seq\":%u,\"sample_uptime_ms\":%u,\"sample_age_ms\":%u,\"uptime_ms\":%u,"
       "\"prediction_calibrated\":%s,\"calibration_mode\":\"%s\",\"calibration_capture_mode\":\"%s\",\"calibration_running\":%s,\"calibration_step\":%u,\"calibration_completed\":%u,\"calibration_remaining_ms\":%u,\"calibration_error\":\"%s\","
       "\"threshold_edit_revision\":%u,\"threshold_edit_pending\":%s,\"threshold_base_a\":%u,\"threshold_base_b\":%u,\"threshold_base_valid\":%s,"
-      "\"protocol\":\"elevox-v5/1\",\"firmware\":\"v7.2.0\",\"mutual_valid\":%s,\"a_timeouts\":%u,\"b_timeouts\":%u,\"id\":\"%s\",\"guard\":\"%s\",\"raw1\":%d,\"raw2\":%d,\"a_p2p\":%u,\"b_p2p\":%u,"
+      "\"protocol\":\"elevox-v5/1\",\"firmware\":\"v7.2.1\",\"mutual_valid\":%s,\"a_timeouts\":%u,\"b_timeouts\":%u,\"id\":\"%s\",\"guard\":\"%s\",\"raw1\":%d,\"raw2\":%d,\"a_p2p\":%u,\"b_p2p\":%u,"
       "\"loadA\":%d,\"loadB\":%d,\"link\":%d,\"hkA\":%u,\"hkB\":%u,\"hkAn\":\"%s\",\"hkBn\":\"%s\","
       "\"batt_pct\":%d,\"batt_v\":%.2f,\"b1\":%s,\"b2\":%s,\"b3\":%s,"
       "\"threshold_a\":%u,\"threshold_b\":%u,\"hook_alarm_enabled\":%s,\"buckle_alarm_enabled\":%s,\"hook_a_valid\":%s,\"hook_b_valid\":%s,\"hookviol\":%s,\"mutual\":%u,\"state\":\"%s\","
@@ -366,7 +367,7 @@ void setupEndpoints(){
       "\"buzz\":%s,\"vol\":%u,\"passive\":%s,"
       "\"alarm\":%s,\"mode\":\"%s\",\"sta_up\":%s,\"sta_ip\":\"%s\",\"ap_ip\":\"%s\","
       "\"rssi\":%d,\"heap\":%u,\"host\":\"%s.local\"}",
-      ranges,hookA.valid?(int)hookA.mean:-1,hookB.valid?(int)hookB.mean:-1,
+      ranges,mutualStatusName(mutualStatus),observedHookMean(hookA,sensingHasFrame,HOOK_SAMPLES),observedHookMean(hookB,sensingHasFrame,HOOK_SAMPLES),(unsigned)HOOK_SAMPLES,DISCHARGE_CEIL,hookA.valid?(int)hookA.mean:-1,hookB.valid?(int)hookB.mean:-1,
       (unsigned)sensingMode,sensingModeName(sensingMode),sensingRevision,preferences.name,preferences.light?"true":"false",sampleSequence,sampleStamp,sampleSequence?(uint32_t)(millis()-sampleStamp):UINT32_MAX,(uint32_t)millis(),
       validCalibration(calibration)?"true":"false",validCalibration(calibration)?(calibration.mode==1?"hand":"metal"):"none",
       calibrationSession.mode()==1?"hand":calibrationSession.mode()==2?"metal":"none",calibrationSession.running()?"true":"false",(unsigned)calibrationSession.step(),(unsigned)calibrationSession.completedSteps(),calibrationSession.remainingMs(millis()),
@@ -441,7 +442,7 @@ void advanceSensing(uint32_t now){
     frameStarted=now;hookSampler.begin(HOOK_A_PIN,HOOK_B_PIN,sensingMode);sensingFrameActive=true;
   }
   if(hookSampler.step()){
-    hookA=hookSampler.resultA();hookB=hookSampler.resultB();
+    hookA=hookSampler.resultA();hookB=hookSampler.resultB();sensingHasFrame=true;
     // Link Index is a measurement, independent of whether prediction is enabled.
     mutualAB=readMutual(HOOK_A_PIN,HOOK_B_PIN,mutualValid);
     bridged=mutualValid && mutualAB<MUTUAL_CEIL;

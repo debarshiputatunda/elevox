@@ -23,6 +23,19 @@ export interface BackendTelemetrySnapshot {
   hook_ranges_revision?: number;
   hook_raw_a?: number;
   hook_raw_b?: number;
+  guard?: 'HIGH' | 'LOW' | 'FLOAT';
+  sensing_mode?: number;
+  sensing_name?: string;
+  link?: number;
+  mutual?: number;
+  mutual_valid?: boolean;
+  mutual_status?: TelemetryData['mutualStatus'];
+  hook_observed_a?: number;
+  hook_observed_b?: number;
+  a_timeouts?: number;
+  b_timeouts?: number;
+  hook_sample_count?: number;
+  hook_timeout_cycles?: number;
   firmware_protocol?: string;
   hook_a_valid?: boolean;
   hook_b_valid?: boolean;
@@ -107,6 +120,19 @@ export const mapBackendTelemetry = (data: BackendTelemetrySnapshot): TelemetryDa
   hookRangesRevision: data.hook_ranges_revision,
   hookRawA: data.hook_raw_a,
   hookRawB: data.hook_raw_b,
+  guard: data.guard,
+  sensingMode: data.sensing_mode,
+  sensingName: data.sensing_name,
+  link: data.link,
+  mutual: data.mutual,
+  mutualValid: data.mutual_valid,
+  mutualStatus: data.mutual_status,
+  hookObservedA: data.hook_observed_a,
+  hookObservedB: data.hook_observed_b,
+  aTimeouts: data.a_timeouts,
+  bTimeouts: data.b_timeouts,
+  hookSampleCount: data.hook_sample_count,
+  hookTimeoutCycles: data.hook_timeout_cycles,
   firmwareProtocol: data.firmware_protocol,
   hookAValid: data.hook_alarm_ranges ? data.hook_a_valid === true : data.hook_a_valid ?? data.hook_a >= 0,
   hookBValid: data.hook_alarm_ranges ? data.hook_b_valid === true : data.hook_b_valid ?? data.hook_b >= 0,

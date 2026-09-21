@@ -23,6 +23,7 @@ void saveSensingSelection(){
     hookSampler.abort();sensingFrameActive=false;sensingMode=requested;sensingRevision++;
     // Never blend old guard polarity or a half-acquired frame into the new mode.
     hookA=CapStat{};hookB=CapStat{};emaA=emaB=-1;dispA=dispB=0;
+    sensingHasFrame=false;mutualStatus=MUTUAL_WAITING;
     mutualValid=false;mutualAB=MUTUAL_CEIL;linkIdx=loadA=loadB=0;bridged=false;hookViolation=false;
     hkA=hkB=0;histI=0;memset(hist,0,sizeof(hist));rawState=stableState=ST_FREE;
     calibrationSession.cancel();calibrationHandled=false;calibrationSaveError="";

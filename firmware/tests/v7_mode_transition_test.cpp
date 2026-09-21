@@ -32,6 +32,7 @@ struct {unsigned char ram[2048]={},flash[2048]={};bool fail=false;int commits=0;
 } EEPROM;
 SensingMode sensingMode=LOW_BATCH;
 HookFrameSampler hookSampler;
+bool sensingHasFrame=true;
 bool sensingFrameActive=true,mutualValid=true,bridged=true,hookViolation=true;
 uint32_t sensingRevision=0,dispA=100,dispB=100,mutualAB=100;
 int linkIdx=100,loadA=100,loadB=100;

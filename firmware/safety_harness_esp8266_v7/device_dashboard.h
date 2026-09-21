@@ -1,7 +1,7 @@
 #pragma once
 const char INDEX_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>v7.2.0</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>v7.2.1</title>
 <style>
 :root{--bg:#141413;--pnl:#1e1e1b;--pnl2:#292923;--field:#171714;--amb:#e2bf29;--stl:#a1adb7;--txt:#faf9f5;--mut:#b1b1a8;--ok:#6dd58a;--bad:#ff8275;--cy:#77ccda;--br:#3b3b34;--ln:#55554a}
 body.light{--bg:#faf9f5;--pnl:#fff;--pnl2:#f0efea;--field:#faf9f5;--amb:#c98a1e;--stl:#586775;--txt:#141413;--mut:#64645b;--ok:#14743a;--bad:#bd3023;--cy:#00768d;--br:#deded5;--ln:#bdbdb2}
@@ -19,7 +19,7 @@ a{color:var(--amb)}body.light a:not(.button){color:#8c5e12}[hidden]{display:none
 @media(max-width:720px){header{padding:12px 16px}.wrap{padding:16px}.g3{grid-template-columns:1fr}.g2{columns:1}.devicebar details{margin-left:0;width:100%}.net{gap:8px}.state .v{font-size:28px}.bkrow{gap:8px}.bk .bn{font-size:11px}#wifiForm{align-items:stretch;flex-direction:column}#wifiForm input{width:100%!important}#wifiForm input[type=checkbox]{width:auto!important}.alarm-setting{align-items:flex-start}.alarm-setting button{min-width:64px}}
 @media(prefers-reduced-motion:reduce){.fl{transition:none}}
 </style></head><body>
-<header><div class="dot" id="conn" aria-label="Connection status"></div><h1>v7.2.0</h1><button id="lightToggle" class="tg" style="margin-left:auto" disabled>LIGHT MODE</button></header>
+<header><div class="dot" id="conn" aria-label="Connection status"></div><h1>v7.2.1</h1><button id="lightToggle" class="tg" style="margin-left:auto" disabled>LIGHT MODE</button></header>
 <div class="wrap">
 <div class="devicebar"><span id="deviceName">Connecting…</span><span class="id" id="devid">-</span><details><summary>Edit device name</summary><form id="nameForm" class="row"><label for="nameInput">Device / hotspot name</label><input id="nameInput" maxlength="32" pattern="[A-Za-z0-9_\-](?:[A-Za-z0-9 _\-]{0,30}[A-Za-z0-9_\-])?" required autocomplete="off"><button id="nameSave" class="pri">SAVE NAME</button></form><p class="hint">1–32 letters, numbers, spaces, hyphens or underscores. No spaces at either end. Renaming also changes the hotspot name.</p></details></div><p id="deviceStatus" role="status"></p>
 <div class="net"><span id="n1">-</span><span id="n2">-</span><span id="n3">-</span></div>
@@ -27,15 +27,16 @@ a{color:var(--amb)}body.light a:not(.button){color:#8c5e12}[hidden]{display:none
 <div class="box stream" id="streamBox"><div class="row"><strong id="streamStatus" role="status">Waiting for stream</strong><button id="diagnostics" style="margin-left:auto">DOWNLOAD DIAGNOSTICS</button></div><div class="hint" id="streamStats">Response and sensor sample ages will appear here.</div><div class="hint" id="diagnosticStatus" role="status"></div></div>
 <div class="box state" id="stB"><div class="lbl">LIVE PREDICTION <span id="predictionStatus"></span></div><div id="predictionDetails"><div class="v" id="stV">-</div><div class="exp" id="stX">-</div><p class="hint" id="senseInfo"></p></div></div>
 
+<p class="hint" id="activeGuard">Waiting for sensing mode…</p>
 <div class="g3">
 <div class="box mtr" id="linkBox"><div class="t"><span>LINK INDEX</span><span class="tag" id="mTag">-</span></div>
-<div class="n" id="mV">-</div><div class="s">raw <span id="mRaw">-</span> cyc</div>
+<div class="n" id="mV">-</div><p class="hint" id="linkReason"></p><div class="s">raw <span id="mRaw">-</span> cyc</div>
 <div class="trk"><div class="fl" id="mF" style="width:0;background:var(--cy)"></div></div></div>
 <div class="box mtr"><div class="t"><span>HOOK A</span><span class="tag" id="aTag">-</span></div>
-<div class="n" id="aV">-</div><div class="s">load <span id="aR">-</span> &middot; p2p <span id="aP">-</span></div>
+<div class="n" id="aV">-</div><p class="hint" id="aQuality"></p><div class="s">load <span id="aR">-</span> &middot; p2p <span id="aP">-</span></div>
 <div class="trk"><div class="fl" id="aF" style="width:0;background:var(--amb)"></div></div></div>
 <div class="box mtr"><div class="t"><span>HOOK B</span><span class="tag" id="bTag">-</span></div>
-<div class="n" id="bV">-</div><div class="s">load <span id="bR">-</span> &middot; p2p <span id="bP">-</span></div>
+<div class="n" id="bV">-</div><p class="hint" id="bQuality"></p><div class="s">load <span id="bR">-</span> &middot; p2p <span id="bP">-</span></div>
 <div class="trk"><div class="fl" id="bF" style="width:0;background:var(--stl)"></div></div></div>
 </div>
 
@@ -265,12 +266,24 @@ $('stX').textContent=!d.predict?'enable prediction to classify':
  st==='STRONG LINK'?'Strong electrical link: touching hooks and hooks on shared metal may look identical.':
  st==='WEAK LINK'?'Weaker electrical coupling; material and fastening are unverified.':
  'Electrical loading only; mechanical fastening is unverified.';
-$('mV').textContent=d.mutual_valid?d.link:'—';$('mRaw').textContent=d.mutual_valid?d.mutual:'unknown';
+const linkReady=d.mutual_valid===true && d.link>0;
+$('activeGuard').textContent='Active guard: '+d.guard+' · '+d.sensing_name+' · '+(d.hook_sample_count||16)+' samples per hook';
+$('mV').textContent=linkReady?d.link:'Unavailable';$('mV').style.fontSize=linkReady?'':'20px';
+$('mRaw').textContent=d.mutual_status==='waiting'?'waiting':d.mutual_status==='reset_timeout'||d.mutual_status==='rise_timeout'?'≥'+d.mutual:d.mutual;
+const reasons={reset_timeout:'Pins did not settle LOW before measurement.',rise_timeout:'No coupled rise detected before timeout.',below_resolution:'Coupling is faster than timer resolution; index cannot be calculated.',waiting:'Waiting for the first completed frame.'};
+$('linkReason').textContent=linkReady?'Live coupling measurement.':(reasons[d.mutual_status]||'No valid coupling measurement.');
 $('mTag').textContent=!d.mutual_valid?'UNKNOWN':d.mutual<d.msh?'STRONG':d.mutual<d.mbr?'WEAK':'NO RISE';
 $('mTag').className='tag t-mut';
 $('mF').style.width=(d.mutual_valid?Math.min(100,d.link/3400*100):0)+'%';
 $('senseInfo').textContent='Timed-out samples: A '+d.a_timeouts+'/16, B '+d.b_timeouts+'/16. Coupling valid: '+d.mutual_valid;
-$('aV').textContent=d.hook_a_valid?d.raw1:'—';$('bV').textContent=d.hook_b_valid?d.raw2:'—';
+for(const h of ['a','b']){
+ const valid=d['hook_'+h+'_valid'],observed=d['hook_observed_'+h],timeouts=d[h+'_timeouts'],count=d.hook_sample_count||16;
+ const partial=!valid && Number.isInteger(observed)&&observed>=0;
+ const saturated=!valid&&timeouts===count;
+ $(h+'V').textContent=valid?d[h==='a'?'raw1':'raw2']:partial?observed:saturated?'≥'+(d.hook_timeout_cycles||800000):'Waiting';
+ $(h+'V').style.fontSize=saturated?'24px':'';
+ $(h+'Quality').textContent=(valid?'Valid reading':partial?'Partial mean · invalid for alarms':saturated?'Discharge timeout · invalid for alarms':'Waiting for a complete frame')+' · '+(timeouts??0)+'/'+count+' timeouts';
+}
 $('aR').textContent=d.predict?(d.loadA>0?'+':'')+d.loadA:'—';$('bR').textContent=d.predict?(d.loadB>0?'+':'')+d.loadB:'—';
 $('aP').textContent=d.a_p2p;$('bP').textContent=d.b_p2p;
 $('aTag').textContent=d.predict?(d.hook_a_valid?d.hkAn:'UNKNOWN'):'OFF';$('bTag').textContent=d.predict?(d.hook_b_valid?d.hkBn:'UNKNOWN'):'OFF';

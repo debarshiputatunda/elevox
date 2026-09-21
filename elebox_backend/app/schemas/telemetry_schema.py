@@ -23,6 +23,20 @@ class TelemetrySnapshotResponse(BaseModel):
     hook_ranges_revision: int | None = None
     hook_raw_a: int | None = None
     hook_raw_b: int | None = None
+    # Display diagnostics only; never substitute for validated hook alarm inputs.
+    guard: str | None = None
+    sensing_mode: int | None = None
+    sensing_name: str | None = None
+    link: int | None = None
+    mutual: int | None = None
+    mutual_valid: bool | None = None
+    mutual_status: str | None = None
+    hook_observed_a: int | None = None
+    hook_observed_b: int | None = None
+    a_timeouts: int | None = None
+    b_timeouts: int | None = None
+    hook_sample_count: int | None = None
+    hook_timeout_cycles: int | None = None
     hook_a_valid: bool | None = None
     hook_b_valid: bool | None = None
     alarm_active: bool

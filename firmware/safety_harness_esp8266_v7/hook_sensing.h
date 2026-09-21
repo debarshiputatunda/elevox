@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 #include <limits.h>
+#include "measurement_status.h"
+MutualStatus mutualStatus=MUTUAL_WAITING;
 // Limits retain v6 timing at 80 MHz. This engine collects one sample per step.
 const uint32_t DISCHARGE_CEIL=800000, MUTUAL_CEIL=12000;
 const int HOOK_SAMPLES=16, CHARGE_US=50, MUTUAL_SAMPLES=12;
@@ -80,7 +82,7 @@ uint32_t readMutualOnce(uint8_t dp, uint8_t sp, bool& valid){
   uint32_t mask=(1u<<dp)|(1u<<sp);
   uint32_t start=ESP.getCycleCount();
   while(GPI&mask){
-    if(ESP.getCycleCount()-start>=MUTUAL_CEIL){valid=false; return MUTUAL_CEIL;}
+    if(ESP.getCycleCount()-start>=MUTUAL_CEIL){valid=false; mutualStatus=MUTUAL_RESET_TIMEOUT; return MUTUAL_CEIL;}
   }
   noInterrupts();
   driveHookHigh(dp);
@@ -88,15 +90,17 @@ uint32_t readMutualOnce(uint8_t dp, uint8_t sp, bool& valid){
   while(!(GPI&(1u<<sp)) && (t-t0<MUTUAL_CEIL)) t=ESP.getCycleCount();
   interrupts();
   releaseHooks(dp,sp);
-  valid=true;
-  return t-t0;
+  uint32_t elapsed=t-t0;
+  valid=elapsed>0 && elapsed<MUTUAL_CEIL;
+  mutualStatus=elapsed>=MUTUAL_CEIL?MUTUAL_RISE_TIMEOUT:elapsed==0?MUTUAL_BELOW_RESOLUTION:MUTUAL_OK;
+  return elapsed;
 }
 uint32_t readMutual(uint8_t dp, uint8_t sp, bool& valid){
   valid=true;
   uint32_t s[MUTUAL_SAMPLES];
   for(int i=0;i<MUTUAL_SAMPLES;i++){
     bool sampleValid=false; s[i]=readMutualOnce(dp,sp,sampleValid);
-    yield(); if(!sampleValid){valid=false; return MUTUAL_CEIL;}
+    yield(); if(!sampleValid){valid=false; return s[i];}
     delayMicroseconds(400);
   }
   for(int i=1;i<MUTUAL_SAMPLES;i++){uint32_t k=s[i];int j=i-1;while(j>=0&&s[j]>k){s[j+1]=s[j];j--;}s[j+1]=k;}

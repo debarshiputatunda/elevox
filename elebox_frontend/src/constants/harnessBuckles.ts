@@ -107,8 +107,10 @@ export const HARNESS_POINTER_KEYS: HarnessPointerKey[] = [
 export const getHookState = (
   isOffline?: boolean,
   exceeded?: boolean,
+  invalid?: boolean,
 ): BuckleState => {
   if (isOffline) return 'offline';
+  if (invalid) return 'unknown';
   if (exceeded) return 'open';
   return 'fastened';
 };
@@ -122,7 +124,7 @@ export const getHookStatusLabel = (state: BuckleState): string => {
     case 'offline':
       return 'OFFLINE';
     default:
-      return 'N/A';
+      return 'INVALID';
   }
 };
 
@@ -135,7 +137,7 @@ export const getHookDescription = (config: HookConfig, state: BuckleState): stri
     case 'offline':
       return 'Controller offline. Hook status unavailable.';
     default:
-      return 'Hook status unknown.';
+      return 'Invalid hook measurement. See sensing diagnostics.';
   }
 };
 

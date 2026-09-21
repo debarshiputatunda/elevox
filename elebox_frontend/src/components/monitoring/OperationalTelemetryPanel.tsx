@@ -4,6 +4,7 @@ import { HookAlarmRangeControl } from './HookAlarmRangeControl';
 import { usePermission } from '@/hooks/usePermission';
 import { Box, Typography } from '@mui/material';
 import { HookLoadTrendChart } from '@/components/monitoring/HookLoadTrendChart';
+import { SensingSummary } from './SensingSummary';
 import { HookSensorCard } from '@/components/monitoring/HookSensorCard';
 import { HookThresholdControl } from '@/components/monitoring/HookThresholdControl';
 import { useHookLoadTrend } from '@/components/monitoring/hooks/useHookLoadTrend';
@@ -83,6 +84,7 @@ export const OperationalTelemetryPanel = ({
       </Box>
 
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+        <SensingSummary device={device} isOnline={isOnline} />
         {rangeMode && device ? <HookAlarmRangeControl key={device.boxId} device={device} canManage={can('sboxes.manage')} /> : <Box display="flex" flexDirection="column" gap={1.5}>
           <HookThresholdControl
             label="Hook A"
@@ -109,6 +111,11 @@ export const OperationalTelemetryPanel = ({
         >
           <HookSensorCard
             label="Hook A"
+            valid={device?.hookAValid}
+            observedValue={device?.hookObservedA}
+            timeouts={device?.aTimeouts}
+            sampleCount={device?.hookSampleCount}
+            timeoutCycles={device?.hookTimeoutCycles}
             rawValue={rangeMode ? device?.hookRawA : undefined}
             rangeMode={rangeMode}
             currentLoad={hookAValue}
@@ -119,6 +126,11 @@ export const OperationalTelemetryPanel = ({
           />
           <HookSensorCard
             label="Hook B"
+            valid={device?.hookBValid}
+            observedValue={device?.hookObservedB}
+            timeouts={device?.bTimeouts}
+            sampleCount={device?.hookSampleCount}
+            timeoutCycles={device?.hookTimeoutCycles}
             rawValue={rangeMode ? device?.hookRawB : undefined}
             rangeMode={rangeMode}
             currentLoad={hookBValue}

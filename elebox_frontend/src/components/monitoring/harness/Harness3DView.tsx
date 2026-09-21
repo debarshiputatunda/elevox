@@ -164,6 +164,7 @@ const Pointer3DMarker = ({
 
 interface SceneProps {
   values: Record<BuckleKey, number | undefined>;
+  hookInvalid?: Partial<Record<HookKey, boolean>>;
   hookExceeded: Record<HookKey, boolean>;
   isOffline?: boolean;
   lastUpdated: string;
@@ -177,6 +178,7 @@ interface SceneProps {
 
 const Scene = ({
   values,
+  hookInvalid,
   hookExceeded,
   isOffline,
   lastUpdated,
@@ -233,7 +235,7 @@ const Scene = ({
       ))}
 
       {HOOK_CONFIG.map((config) => {
-        const state = getHookState(isOffline, hookExceeded[config.key]);
+        const state = getHookState(isOffline, hookExceeded[config.key], hookInvalid?.[config.key]);
         const value = state === 'offline' ? undefined : state === 'open' ? 1 : 0;
         return (
           <Pointer3DMarker
@@ -269,6 +271,7 @@ const Scene = ({
 
 interface Harness3DViewProps {
   values: Record<BuckleKey, number | undefined>;
+  hookInvalid?: Partial<Record<HookKey, boolean>>;
   hookExceeded: Record<HookKey, boolean>;
   isOffline?: boolean;
   lastUpdated: string;
@@ -281,6 +284,7 @@ interface Harness3DViewProps {
 
 export const Harness3DView = ({
   values,
+  hookInvalid,
   hookExceeded,
   isOffline,
   lastUpdated,
@@ -319,6 +323,7 @@ export const Harness3DView = ({
       >
         <Scene
           values={values}
+          hookInvalid={hookInvalid}
           hookExceeded={hookExceeded}
           isOffline={isOffline}
           lastUpdated={lastUpdated}

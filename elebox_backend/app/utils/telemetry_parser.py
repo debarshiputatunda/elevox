@@ -38,6 +38,20 @@ class TelemetryReading:
     hook_ranges_revision: int | None = None
     hook_raw_a: int | None = None
     hook_raw_b: int | None = None
+    # Display diagnostics only; never substitute for validated hook alarm inputs.
+    guard: str | None = None
+    sensing_mode: int | None = None
+    sensing_name: str | None = None
+    link: int | None = None
+    mutual: int | None = None
+    mutual_valid: bool | None = None
+    mutual_status: str | None = None
+    hook_observed_a: int | None = None
+    hook_observed_b: int | None = None
+    a_timeouts: int | None = None
+    b_timeouts: int | None = None
+    hook_sample_count: int | None = None
+    hook_timeout_cycles: int | None = None
 
 
 def _integer(value, name, minimum, maximum):
@@ -56,6 +70,35 @@ def _voltage(value):
     if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 20:
         raise ValueError('Invalid battery voltage')
     return float(value)
+
+
+def _sensing_diagnostics(data):
+    diagnostics = {}
+    bounds = {
+        'sensing_mode': (0, 2), 'link': (0, 2**32 - 1),
+        'mutual': (0, 2**32 - 1),
+        'hook_observed_a': (-1, 1000000), 'hook_observed_b': (-1, 1000000),
+        'a_timeouts': (0, 16), 'b_timeouts': (0, 16),
+        'hook_sample_count': (16, 16), 'hook_timeout_cycles': (800000, 800000),
+    }
+    for key, (minimum, maximum) in bounds.items():
+        if data.get(key) is not None:
+            diagnostics[key] = _integer(data[key], key, minimum, maximum)
+    for key, choices in {
+        'guard': ('HIGH', 'LOW', 'FLOAT'),
+        'mutual_status': ('ok', 'reset_timeout', 'rise_timeout', 'below_resolution', 'waiting'),
+    }.items():
+        if data.get(key) is not None:
+            if type(data[key]) is not str or data[key] not in choices:
+                raise ValueError(f'Invalid {key}')
+            diagnostics[key] = data[key]
+    if data.get('sensing_name') is not None:
+        if type(data['sensing_name']) is not str:
+            raise ValueError('Invalid sensing_name')
+        diagnostics['sensing_name'] = data['sensing_name']
+    if data.get('mutual_valid') is not None:
+        diagnostics['mutual_valid'] = _boolean(data['mutual_valid'], 'mutual_valid')
+    return diagnostics
 
 
 def parse_telemetry_csv(payload: str) -> TelemetryReading:
@@ -133,7 +176,7 @@ def parse_telemetry(payload: str) -> TelemetryReading:
             threshold_sync='device-owned' if range_metadata else 'pending' if managed else 'unsupported', device_id=data['id'],
             buckle_alarm_enabled=_boolean(data['buckle_alarm_enabled'], 'buckle_alarm_enabled')
                 if 'buckle_alarm_enabled' in data else None,
-            **edit_metadata, **range_metadata)
+            **edit_metadata, **range_metadata, **_sensing_diagnostics(data))
     except (KeyError, TypeError) as exc:
         raise ValueError('Incomplete device telemetry') from exc
 

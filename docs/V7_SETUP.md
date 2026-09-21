@@ -1,4 +1,4 @@
-# V7.2.0: dual alarm ranges and faster live updates
+# V7.2.1: visible sensing diagnostics and dual alarm ranges
 
 V7 retains the v6.2 hotspot, router profiles, threshold synchronization, alarms, prediction/calibration, recording, device name/theme and diagnostics. V6 remains separately available. The active sketch is `firmware/safety_harness_esp8266_v7/safety_harness_esp8266_v7.ino`.
 
@@ -30,7 +30,7 @@ Prediction tuning controls outside the guided calibration (baseline, link limits
 
 ## Telemetry, CSV and storage
 
-The protocol remains `elevox-v5/1`; `firmware` is `v7.2.0`. New fields are `sensing_mode` (0/1/2), `sensing_name` (`v6-high` / `low-batch` / `low-alternating`) and `sensing_revision` (increments on runtime mode changes). `guard` reports HIGH or LOW. Timeout counters remain visible even when a LOW-mode partial batch yields a valid mean.
+The protocol remains `elevox-v5/1`; `firmware` is `v7.2.1`. New fields are `sensing_mode` (0/1/2), `sensing_name` (`v6-high` / `low-batch` / `low-alternating`) and `sensing_revision` (increments on runtime mode changes). `guard` reports HIGH or LOW. Timeout counters remain visible even when a LOW-mode partial batch yields a valid mean.
 
 POST `/sensing` accepts one form field `mode=0`, `1`, or `2`. Invalid values return 400, active calibration returns 409, failed persistence returns 500. Success returns `{ "saved": true, "mode": 1 }` for the default mode. The existing device page exposes these controls; no separate website/backend change is required by the compatible data contract.
 
@@ -40,7 +40,7 @@ EEPROM uses the existing 2048-byte allocation. Alarm settings, network profiles 
 
 ## Build and install
 
-Run `firmware/build_v7.sh` with ESP8266 core 3.1.2. It builds a credential-free NodeMCU v2 image at 80 MHz, 4 MB flash / 2 MB filesystem, into `firmware/releases/elevox-v7.2.0.bin` and a SHA-256 file. The script rejects images at or above 1,000,000 bytes, below the requested 2 MB ceiling.
+Run `firmware/build_v7.sh` with ESP8266 core 3.1.2. It builds a credential-free NodeMCU v2 image at 80 MHz, 4 MB flash / 2 MB filesystem, into `firmware/releases/elevox-v7.2.1.bin` and a SHA-256 file. The script rejects images at or above 1,000,000 bytes, below the requested 2 MB ceiling.
 
 Upload the `.bin` through **Firmware update** at `http://192.168.4.1/update`, using the firmware field. The currently flashed device still needs enough OTA free space. Saved network/name/theme/threshold settings remain. Open the hotspot page manually after reboot, select the desired mode, then verify readings, thresholds and optional calibration.
 
@@ -81,3 +81,13 @@ Firmware POST form fields: `a0_min`, `a0_max`, `a1_min`, `a1_max`, `b0_min`, `b0
 The minimum sensing frame period is reduced from 120 to 50 ms. Device-page requests use a 100 ms timer with no overlapping requests; active backend polling targets 100 ms between request starts instead of adding a full delay after each response. Idle/offline backoff remains. Alarm decisions no longer wait for the display EMA to settle. These are configured cadences, not measured end-to-end guarantees: 32 discharge samples can still take about 320 ms when saturated, and Wi-Fi/HTTP adds delay. Sampling polarity, 16-sample count and timeout behavior are retained.
 
 Tests cover inclusive boundaries, mixed bands, one-hook-only rejection, persistence/failure rollback, revision conflicts, strict acknowledgments, stale packets, independent buckle behavior and nonoverlapping polling. Physical device latency and alarm behavior still need on-device verification.
+
+## Visible HIGH-guard and Link Index diagnostics (v7.2.1)
+
+Both interfaces now display active guard/mode and Link Index independently of prediction. HIGH guard still requires all 16 samples to complete for a valid alarm reading. Previously, any timeout replaced the entire displayed HIGH reading with a dash. The display now shows the mean of the finite samples, explicitly marked partial/invalid, or **≥800,000 cycles** when all 16 time out. Waiting for a completed frame is shown separately. Diagnostic values never replace valid alarm inputs.
+
+`hook_observed_a` and `hook_observed_b` contain the finite-sample means even when the strict HIGH validity rule fails; -1 means no finite result. The usual `hook_raw_a`/`hook_raw_b` and validity flags retain their safety semantics. `hook_sample_count`, `hook_timeout_cycles`, `a_timeouts`, and `b_timeouts` explain the readout.
+
+Link Index requires a positive, completed coupling measurement. The `mutual_status` field distinguishes `ok`, `reset_timeout` (pins did not settle LOW), `rise_timeout` (no coupled rise), `below_resolution`, and `waiting`. Timed-out/no-rise measurements no longer produce a misleading numeric index; zero-duration results are explicitly unresolved. Raw timing remains visible with its qualifier. Guard, sensing mode and all diagnostic fields now pass through backend REST/WebSocket telemetry to the website.
+
+No extra HIGH measurements are collected during LOW mode. Guard polarity, timeout durations and the both-hooks range alarm rule remain unchanged. Pins are not forced to ground to obtain a Link Index. If the circuit keeps a HIGH-guard input charged, a finite discharge value cannot be recovered by UI changes; the visible timeout and diagnostics identify that condition for physical investigation.
