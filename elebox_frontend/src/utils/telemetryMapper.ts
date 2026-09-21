@@ -1,3 +1,4 @@
+import { hookRangeAlarm, validHookAlarmRanges } from '@/utils/hookAlarmRanges';
 import type { DeviceStatus, TelemetryData, TelemetryHistoryPoint } from '@/types';
 
 export interface BackendTelemetrySnapshot {
@@ -18,6 +19,10 @@ export interface BackendTelemetrySnapshot {
   alarm_active: boolean;
   alarm_cause?: string;
   buckle_alarm_enabled?: boolean | null;
+  hook_alarm_ranges?: TelemetryData['hookAlarmRanges'];
+  hook_ranges_revision?: number;
+  hook_raw_a?: number;
+  hook_raw_b?: number;
   firmware_protocol?: string;
   hook_a_valid?: boolean;
   hook_b_valid?: boolean;
@@ -74,7 +79,7 @@ const resolveDeviceStatus = (snapshot: BackendTelemetrySnapshot): DeviceStatus =
   const hookBExceeded =
     snapshot.hook_b_threshold != null
     && snapshot.hook_b >= snapshot.hook_b_threshold;
-  if (hookAExceeded || hookBExceeded) return 'warning';
+  if (validHookAlarmRanges(snapshot.hook_alarm_ranges) ? hookRangeAlarm({ hookAlarmRanges: snapshot.hook_alarm_ranges, hookRawA: snapshot.hook_raw_a, hookRawB: snapshot.hook_raw_b, hookAValid: snapshot.hook_a_valid, hookBValid: snapshot.hook_b_valid }) : hookAExceeded || hookBExceeded) return 'warning';
   if (snapshot.battery_percent < 20) return 'warning';
   return 'normal';
 };
@@ -98,9 +103,13 @@ export const mapBackendTelemetry = (data: BackendTelemetrySnapshot): TelemetryDa
   alarmActive: data.alarm_active,
   alarmCause: data.alarm_cause,
   buckleAlarmEnabled: data.buckle_alarm_enabled ?? null,
+  hookAlarmRanges: validHookAlarmRanges(data.hook_alarm_ranges) ? data.hook_alarm_ranges : undefined,
+  hookRangesRevision: data.hook_ranges_revision,
+  hookRawA: data.hook_raw_a,
+  hookRawB: data.hook_raw_b,
   firmwareProtocol: data.firmware_protocol,
-  hookAValid: data.hook_a_valid ?? data.hook_a >= 0,
-  hookBValid: data.hook_b_valid ?? data.hook_b >= 0,
+  hookAValid: data.hook_alarm_ranges ? data.hook_a_valid === true : data.hook_a_valid ?? data.hook_a >= 0,
+  hookBValid: data.hook_alarm_ranges ? data.hook_b_valid === true : data.hook_b_valid ?? data.hook_b >= 0,
   thresholdSync: data.threshold_sync,
   deviceThresholdA: data.device_threshold_a,
   deviceThresholdB: data.device_threshold_b,

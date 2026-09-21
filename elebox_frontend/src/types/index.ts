@@ -185,6 +185,10 @@ export interface TelemetryData {
   alarmActive?: boolean;
   alarmCause?: string;
   buckleAlarmEnabled?: boolean | null;
+  hookAlarmRanges?: import('@/utils/hookAlarmRanges').HookAlarmRanges;
+  hookRangesRevision?: number;
+  hookRawA?: number;
+  hookRawB?: number;
   firmwareProtocol?: string;
   hookAValid?: boolean;
   hookBValid?: boolean;

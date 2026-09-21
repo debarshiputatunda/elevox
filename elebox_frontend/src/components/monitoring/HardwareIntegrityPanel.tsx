@@ -10,6 +10,7 @@ import { batteryMuiColor } from '@/constants/monitoringTheme';
 import { HarnessVisualization } from '@/components/monitoring/HarnessVisualization';
 import { BuckleAlarmControl } from '@/components/monitoring/BuckleAlarmControl';
 import { usePermission } from '@/hooks/usePermission';
+import { hookRangeAlarm } from '@/utils/hookAlarmRanges';
 import { isHookExceeded } from '@/utils/hookThreshold';
 
 interface HardwareIntegrityPanelProps {
@@ -86,10 +87,10 @@ export const HardwareIntegrityPanel = ({
           buckle3={device.buckle3}
           hookAValue={device.hookAValue}
           hookBValue={device.hookBValue}
-          hookAThreshold={hookAThreshold}
-          hookBThreshold={hookBThreshold}
-          hookAExceeded={isHookExceeded(device.hookAValue, hookAThreshold)}
-          hookBExceeded={isHookExceeded(device.hookBValue, hookBThreshold)}
+          hookAThreshold={device.hookAlarmRanges ? undefined : hookAThreshold}
+          hookBThreshold={device.hookAlarmRanges ? undefined : hookBThreshold}
+          hookAExceeded={device.hookAlarmRanges ? hookRangeAlarm(device) : isHookExceeded(device.hookAValue, hookAThreshold)}
+          hookBExceeded={device.hookAlarmRanges ? hookRangeAlarm(device) : isHookExceeded(device.hookBValue, hookBThreshold)}
           isOffline={isOffline}
           lastUpdated={device.lastUpdated}
           batteryVoltage={device.batteryVoltage}

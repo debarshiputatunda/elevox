@@ -69,10 +69,13 @@ void serviceCalibration(){
 }
 #include "sensing_runtime.h"
 void showDiagnostics(){
-  String json;json.reserve(1100);
+  char rangeFields[240];rangeJson(rangeFields,sizeof(rangeFields),hookRanges);
+  String json;json.reserve(1400);
   json="{\"firmware\":"+jsonString(FIRMWARE_VERSION)+",\"device_id\":"+jsonString(sboxID)+",\"device_name\":"+jsonString(preferences.name);
   json+=",\"sensing_mode\":"+String((unsigned)sensingMode)+",\"sensing_name\":"+jsonString(sensingModeName(sensingMode))+",\"sensing_revision\":"+String(sensingRevision);
   json+=",\"uptime_ms\":"+String(millis())+",\"sample_seq\":"+String(sampleSequence)+",\"sample_age_ms\":"+String(sampleSequence?(uint32_t)(millis()-sampleStamp):UINT32_MAX);
+  json+=","+String(rangeFields);
+  json+=",\"hook_raw_a\":"+String(hookA.valid?(int)hookA.mean:-1)+",\"hook_raw_b\":"+String(hookB.valid?(int)hookB.mean:-1);
   json+=",\"buckle_alarm_enabled\":"+String(buckleAlarmEnabled?"true":"false");
   json+=",\"wifi_mode\":"+String((unsigned)WiFi.getMode())+",\"wifi_channel\":"+String(WiFi.channel())+",\"hotspot_starts\":"+String(hotspotStartCount)+",\"router_attempts\":"+String(routerAttemptCount)+",\"auto_attempts_cancelled\":"+String(automaticAttemptCancelledCount);
   json+=",\"frame_ms\":"+String(frameDuration)+",\"heap\":"+String(ESP.getFreeHeap())+",\"max_free_block\":"+String(ESP.getMaxFreeBlockSize())+",\"heap_fragmentation\":"+String(ESP.getHeapFragmentation());

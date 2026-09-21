@@ -35,6 +35,12 @@ The updated v5 uses the currently working Elevox firmware pin map by default. Se
 
 ## Alarm and threshold behavior
 
+**Current v7.2.0:** each hook has two inclusive alarm ranges, initially 10–1,800 and 10,000–1,000,000. Both hooks must be inside a range to trigger the hook alarm; they may match different bands. Both interfaces edit the same device-owned saved ranges. Fresh unsmoothed readings drive the alarm; display smoothing remains optional. Buckle alarms have their own saved ON/OFF control. See [v7 setup](docs/V7_SETUP.md) and [download v7.2.0](https://github.com/debarshiputatunda/elevox/releases/tag/v7.2.0).
+
+Device-page and active backend requests now target 100 ms, with no overlaps, and the minimum sensing period is 50 ms. Measurement time and Wi-Fi still determine actual latency. Firmware and software must both be upgraded for range control.
+
+The following describes older single-threshold firmware:
+
 V6 also accepts threshold edits from its firmware page and synchronizes them back to MySQL with revision checks; independent website edits take priority in conflicts.
 
 The website saves independent raw hook thresholds to MySQL. The backend sends them to integrated v5, which commits them to EEPROM and uses them while offline. The monitoring page separately shows server-save status and device confirmation. A disconnected device keeps its last confirmed limits; a new value cannot apply there until synchronization completes.

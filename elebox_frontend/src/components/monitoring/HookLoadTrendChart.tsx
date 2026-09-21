@@ -54,6 +54,7 @@ const renderXAxisTick = ({
 
 interface HookLoadTrendChartProps {
   samples: HookLoadSample[];
+  hideThresholds?: boolean;
   now: number;
   hookAThreshold: number;
   hookBThreshold: number;
@@ -63,6 +64,7 @@ interface HookLoadTrendChartProps {
 
 export const HookLoadTrendChart = ({
   samples,
+  hideThresholds = false,
   now,
   hookAThreshold,
   hookBThreshold,
@@ -72,7 +74,7 @@ export const HookLoadTrendChart = ({
   const chartData = useMemo(
     () =>
       samples.map((sample) => ({
-        secondsAgo: Math.max(0, Math.round((now - sample.t) / 1000)),
+        secondsAgo: Math.max(0, (now - sample.t) / 1000),
         hookA: sample.hookA,
         hookB: sample.hookB,
       })),
@@ -84,9 +86,9 @@ export const HookLoadTrendChart = ({
       (max, point) => Math.max(max, point.hookA, point.hookB),
       0,
     );
-    const thresholdPeak = Math.max(hookAThreshold, hookBThreshold);
+    const thresholdPeak = hideThresholds ? 0 : Math.max(hookAThreshold, hookBThreshold);
     return Math.max(5_000, Math.ceil(Math.max(peak, thresholdPeak) / 1000) * 1000);
-  }, [chartData, hookAThreshold, hookBThreshold]);
+  }, [chartData, hookAThreshold, hookBThreshold, hideThresholds]);
 
   const thresholdLines = useMemo(() => {
     const values = new Set([hookAThreshold, hookBThreshold]);
@@ -181,7 +183,7 @@ export const HookLoadTrendChart = ({
                 height={28}
                 wrapperStyle={{ fontSize: 11, paddingTop: 8, width: '100%' }}
               />
-              {thresholdLines.map((threshold) => (
+              {!hideThresholds && thresholdLines.map((threshold) => (
                 <ReferenceLine
                   key={threshold}
                   y={threshold}

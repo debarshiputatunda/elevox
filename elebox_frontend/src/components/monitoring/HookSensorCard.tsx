@@ -15,6 +15,8 @@ const exceededFlashDark = keyframes`
 
 interface HookSensorCardProps {
   label: string;
+  rangeMode?: boolean;
+  rawValue?: number;
   currentLoad: number;
   threshold: number;
   exceeded: boolean;
@@ -33,6 +35,8 @@ const columnLabelSx = {
 
 export const HookSensorCard = ({
   label,
+  rangeMode = false,
+  rawValue,
   currentLoad,
   threshold,
   exceeded,
@@ -40,7 +44,7 @@ export const HookSensorCard = ({
   lastUpdated,
 }: HookSensorCardProps) => {
   const theme = useTheme();
-  const statusLabel = isOffline ? 'OFFLINE' : exceeded ? 'EXCEEDED' : 'NORMAL';
+  const statusLabel = isOffline ? 'OFFLINE' : exceeded ? (rangeMode ? 'HOOK ALARM' : 'EXCEEDED') : 'NORMAL';
   const statusBg = isOffline ? 'action.selected' : exceeded ? 'error.light' : 'success.light';
   const statusColor = isOffline ? 'text.secondary' : exceeded ? 'error.dark' : 'success.dark';
   const pulseColor = isOffline ? 'text.disabled' : exceeded ? 'error.main' : 'success.main';
@@ -99,7 +103,7 @@ export const HookSensorCard = ({
         }}
       >
         <Box sx={{ textAlign: 'center', px: 0.5 }}>
-          <Typography sx={columnLabelSx}>Current Load</Typography>
+          <Typography sx={columnLabelSx}>{rangeMode ? 'Smoothed reading' : 'Current Load'}</Typography>
           <Typography
             fontFamily={monitoringMono}
             fontWeight={700}
@@ -118,7 +122,7 @@ export const HookSensorCard = ({
         />
 
         <Box sx={{ textAlign: 'center', px: 0.5 }}>
-          <Typography sx={columnLabelSx}>Threshold</Typography>
+          <Typography sx={columnLabelSx}>{rangeMode ? 'Raw reading' : 'Threshold'}</Typography>
           <Typography
             fontFamily={monitoringMono}
             fontWeight={700}
@@ -126,7 +130,7 @@ export const HookSensorCard = ({
             lineHeight={1}
             color={thresholdColor}
           >
-            {threshold}
+            {rangeMode ? (isOffline ? '—' : rawValue ?? '—') : threshold}
           </Typography>
         </Box>
 

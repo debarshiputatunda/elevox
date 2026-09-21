@@ -1,3 +1,7 @@
+import type { TelemetryData } from '@/types';
+import { hookRangeAlarm } from '@/utils/hookAlarmRanges';
+import { HookAlarmRangeControl } from './HookAlarmRangeControl';
+import { usePermission } from '@/hooks/usePermission';
 import { Box, Typography } from '@mui/material';
 import { HookLoadTrendChart } from '@/components/monitoring/HookLoadTrendChart';
 import { HookSensorCard } from '@/components/monitoring/HookSensorCard';
@@ -6,6 +10,7 @@ import { useHookLoadTrend } from '@/components/monitoring/hooks/useHookLoadTrend
 import { isHookExceeded } from '@/utils/hookThreshold';
 
 interface OperationalTelemetryPanelProps {
+  device?: TelemetryData;
   boxId: number;
   isOnline?: boolean;
   hookAValue: number;
@@ -18,6 +23,7 @@ interface OperationalTelemetryPanelProps {
 }
 
 export const OperationalTelemetryPanel = ({
+  device,
   boxId,
   isOnline = true,
   hookAValue,
@@ -28,8 +34,11 @@ export const OperationalTelemetryPanel = ({
   onHookAThresholdChange,
   onHookBThresholdChange,
 }: OperationalTelemetryPanelProps) => {
-  const hookAExceeded = isHookExceeded(hookAValue, hookAThreshold);
-  const hookBExceeded = isHookExceeded(hookBValue, hookBThreshold);
+  const {can}=usePermission();
+  const rangeMode = Boolean(device?.hookAlarmRanges);
+  const rangeAlarm = device ? hookRangeAlarm(device) : false;
+  const hookAExceeded = rangeMode ? rangeAlarm : isHookExceeded(hookAValue, hookAThreshold);
+  const hookBExceeded = rangeMode ? rangeAlarm : isHookExceeded(hookBValue, hookBThreshold);
   const { samples, now, isLoading: trendLoading } = useHookLoadTrend(
     boxId,
     hookAValue,
@@ -74,22 +83,22 @@ export const OperationalTelemetryPanel = ({
       </Box>
 
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
-        <Box display="flex" flexDirection="column" gap={1.5}>
+        {rangeMode && device ? <HookAlarmRangeControl key={device.boxId} device={device} canManage={can('sboxes.manage')} /> : <Box display="flex" flexDirection="column" gap={1.5}>
           <HookThresholdControl
             label="Hook A"
             value={hookAThreshold}
             onChange={onHookAThresholdChange}
-            disabled={!isOnline}
+            disabled={!isOnline || !can('sboxes.manage')}
             compact
           />
           <HookThresholdControl
             label="Hook B"
             value={hookBThreshold}
             onChange={onHookBThresholdChange}
-            disabled={!isOnline}
+            disabled={!isOnline || !can('sboxes.manage')}
             compact
           />
-        </Box>
+        </Box>}
 
         <Box
           sx={{
@@ -100,6 +109,8 @@ export const OperationalTelemetryPanel = ({
         >
           <HookSensorCard
             label="Hook A"
+            rawValue={rangeMode ? device?.hookRawA : undefined}
+            rangeMode={rangeMode}
             currentLoad={hookAValue}
             threshold={hookAThreshold}
             exceeded={isOnline && hookAExceeded}
@@ -108,6 +119,8 @@ export const OperationalTelemetryPanel = ({
           />
           <HookSensorCard
             label="Hook B"
+            rawValue={rangeMode ? device?.hookRawB : undefined}
+            rangeMode={rangeMode}
             currentLoad={hookBValue}
             threshold={hookBThreshold}
             exceeded={isOnline && hookBExceeded}
@@ -118,6 +131,7 @@ export const OperationalTelemetryPanel = ({
 
         <HookLoadTrendChart
           samples={samples}
+          hideThresholds={rangeMode}
           now={now}
           hookAThreshold={hookAThreshold}
           hookBThreshold={hookBThreshold}

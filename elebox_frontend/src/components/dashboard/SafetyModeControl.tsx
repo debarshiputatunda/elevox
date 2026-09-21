@@ -26,10 +26,10 @@ export const SafetyModeControl = () => {
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1} mb={1}>
           <Box>
             <Typography variant="subtitle1" fontWeight={700} mb={0.5}>
-              Browser buckle siren
+              Browser safety siren
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Local audio for {deviceCount > 0 ? `${deviceCount} ` : ''}Elevox devices with buckle alarms enabled. Device alarm settings are controlled in Monitoring.
+              Local audio for {deviceCount > 0 ? `${deviceCount} ` : ''}Elevox devices: both hooks in alarm ranges, or an open buckle with its alarm enabled. Device settings are controlled in Monitoring.
             </Typography>
           </Box>
           <Chip
@@ -51,7 +51,7 @@ export const SafetyModeControl = () => {
         </Button>
         {safetyModeEnabled && (
           <Typography variant="caption" color="warning.main" fontWeight={600} display="block" mt={1.5}>
-            Browser audio is armed. Devices with their buckle alarm off are excluded.
+            Browser audio is armed. Turning off a device buckle alarm mutes only its buckle alerts.
           </Typography>
         )}
       </CardContent>

@@ -1,3 +1,4 @@
+import { validHookAlarmRanges, validHookRevision, nextHookRevision } from '@/utils/hookAlarmRanges';
 import { apiClient, isMockMode } from '@/api/client';
 import {
   ACTIVITY_STATUS_OPTIONS,
@@ -138,6 +139,15 @@ export const sboxService = {
 
     const { data } = await apiClient.patch<BackendSBox>(`/sboxes/${id}/status`, { enabled });
     return mapBackendSBox(data);
+  },
+
+  setHookRanges: async (id: number, ranges: import('@/utils/hookAlarmRanges').HookAlarmRanges, expectedRevision: number) => {
+    if (isMockMode()) throw new Error('Device confirmation is unavailable in demo mode.');
+    const { data } = await apiClient.patch<{ confirmed: boolean; confirmed_at: string; hook_alarm_ranges: import('@/utils/hookAlarmRanges').HookAlarmRanges; hook_ranges_revision: number }>(
+      `/sboxes/${id}/hook-ranges`, { ...ranges, expected_revision: expectedRevision },
+    );
+    if (data.confirmed !== true || !validHookAlarmRanges(data.hook_alarm_ranges) || !(['a', 'b'] as const).every((hook) => data.hook_alarm_ranges[hook].every((range, i) => range.every((bound, j) => bound === ranges[hook][i][j]))) || !validHookRevision(data.hook_ranges_revision) || (data.hook_ranges_revision !== expectedRevision && data.hook_ranges_revision !== nextHookRevision(expectedRevision))) throw new Error('The device did not confirm the hook ranges.');
+    return data;
   },
 
   setBuckleAlarm: async (id: number, enabled: boolean): Promise<{ enabled: boolean; confirmed: true; confirmed_at?: string }> => {

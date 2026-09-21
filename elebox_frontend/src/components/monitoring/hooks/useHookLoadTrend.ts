@@ -9,7 +9,7 @@ export interface HookLoadSample {
 }
 
 const WINDOW_MS = 60_000;
-const LIVE_SAMPLE_INTERVAL_MS = 1_000;
+const LIVE_SAMPLE_INTERVAL_MS = 100;
 
 export const useHookLoadTrend = (
   boxId: number | undefined,
@@ -49,7 +49,7 @@ export const useHookLoadTrend = (
   }, [boxId]);
 
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1_000);
+    const interval = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(interval);
   }, []);
 

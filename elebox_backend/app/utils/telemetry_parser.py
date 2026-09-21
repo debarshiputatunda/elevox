@@ -3,6 +3,7 @@ import math
 from dataclasses import dataclass
 
 from app.core.telemetry_config import ESP_FINE_MAX, ESP_FINE_MIN
+from app.utils.hook_ranges import validate_hook_ranges
 
 V5_PROTOCOL = 'elevox-v5/1'
 
@@ -33,6 +34,10 @@ class TelemetryReading:
     threshold_base_b: int | None = None
     threshold_base_valid: bool = False
     buckle_alarm_enabled: bool | None = None
+    hook_alarm_ranges: dict | None = None
+    hook_ranges_revision: int | None = None
+    hook_raw_a: int | None = None
+    hook_raw_b: int | None = None
 
 
 def _integer(value, name, minimum, maximum):
@@ -88,10 +93,21 @@ def parse_telemetry(payload: str) -> TelemetryReading:
             raise ValueError('Invalid alarm mode')
         _boolean(data['alarm'], 'alarm')
         managed = protocol == V5_PROTOCOL
+        range_fields = ('hook_alarm_ranges', 'hook_ranges_revision', 'hook_raw_a', 'hook_raw_b')
+        range_metadata = {}
+        if any(key in data for key in range_fields):
+            if not managed or not all(key in data for key in range_fields):
+                raise ValueError('Incomplete hook range metadata')
+            range_metadata = {
+                'hook_alarm_ranges': validate_hook_ranges(data['hook_alarm_ranges']),
+                'hook_ranges_revision': _integer(data['hook_ranges_revision'], 'hook_ranges_revision', 0, 2**32 - 1),
+                'hook_raw_a': _integer(data['hook_raw_a'], 'hook_raw_a', -1, 1000000),
+                'hook_raw_b': _integer(data['hook_raw_b'], 'hook_raw_b', -1, 1000000),
+            }
         edit_fields = ('threshold_edit_revision', 'threshold_edit_pending',
                        'threshold_base_a', 'threshold_base_b', 'threshold_base_valid')
         edit_metadata = {}
-        if any(key in data for key in edit_fields):
+        if not range_metadata and any(key in data for key in edit_fields):
             if not managed or not all(key in data for key in edit_fields):
                 raise ValueError('Incomplete threshold edit metadata')
             edit_metadata = {
@@ -111,13 +127,13 @@ def parse_telemetry(payload: str) -> TelemetryReading:
             *buckles, int(mode != 'NONE'), protocol=protocol, alarm_cause=mode,
             hook_a_valid=valid_a, hook_b_valid=valid_b,
             autonomous_hooks=managed,
-            device_threshold_a=_integer(data['threshold_a'], 'threshold_a', 0, 100000) if managed else None,
-            device_threshold_b=_integer(data['threshold_b'], 'threshold_b', 0, 100000) if managed else None,
+            device_threshold_a=_integer(data['threshold_a'], 'threshold_a', 0, 100000) if managed and not range_metadata else None,
+            device_threshold_b=_integer(data['threshold_b'], 'threshold_b', 0, 100000) if managed and not range_metadata else None,
             hook_alarm_enabled=_boolean(data['hook_alarm_enabled'], 'hook_alarm_enabled') if managed else False,
-            threshold_sync='pending' if managed else 'unsupported', device_id=data['id'],
+            threshold_sync='device-owned' if range_metadata else 'pending' if managed else 'unsupported', device_id=data['id'],
             buckle_alarm_enabled=_boolean(data['buckle_alarm_enabled'], 'buckle_alarm_enabled')
                 if 'buckle_alarm_enabled' in data else None,
-            **edit_metadata)
+            **edit_metadata, **range_metadata)
     except (KeyError, TypeError) as exc:
         raise ValueError('Incomplete device telemetry') from exc
 

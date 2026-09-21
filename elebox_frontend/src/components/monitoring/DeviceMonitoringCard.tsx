@@ -88,6 +88,7 @@ export const DeviceMonitoringCard = ({
       }}
     >
       <OperationalTelemetryPanel
+        device={device}
         boxId={device.boxId}
         isOnline={device.isOnline}
         hookAValue={device.hookAValue}

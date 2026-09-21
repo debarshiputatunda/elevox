@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/hooks/redux';
 import { addMonitoringEvent } from '@/store/slices/monitoringSlice';
 import { useDeviceTelemetrySubscription } from '@/hooks/useTelemetryWebSocket';
+import { hookRangeAlarm } from '@/utils/hookAlarmRanges';
 import { hasOpenBuckle, playAirRaidSiren } from '@/utils/airRaidSiren';
 
 interface BuckleSnapshot {
@@ -69,10 +70,9 @@ export const useSafetyMonitor = () => {
 
       if (
         safetyModeEnabled
-        && device.buckleAlarmEnabled !== false
         && device.isOnline
         && initializedRef.current
-        && hasOpenBuckle(device.buckle1, device.buckle2, device.buckle3)
+        && (hookRangeAlarm(device) || (device.buckleAlarmEnabled !== false && hasOpenBuckle(device.buckle1, device.buckle2, device.buckle3)))
       ) {
         void playAirRaidSiren();
       }

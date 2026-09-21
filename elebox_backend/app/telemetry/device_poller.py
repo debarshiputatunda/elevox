@@ -136,6 +136,8 @@ class DevicePoller:
             return thresholds
 
     async def _reconcile_thresholds(self, reading):
+        if reading.hook_alarm_ranges is not None:
+            return reading
         box_meta = self.box
         try:
             thresholds = await asyncio.to_thread(self._current_thresholds, reading)
@@ -168,7 +170,7 @@ class DevicePoller:
                     self.box.box_ip,
                     box_id=self.box_id,
                 )
-                if reading.autonomous_hooks:
+                if reading.autonomous_hooks and reading.hook_alarm_ranges is None:
                     reading = await self._reconcile_thresholds(reading)
                 elapsed_ms = (time.perf_counter() - started) * 1000
                 now = utc_now_naive()
@@ -215,7 +217,7 @@ class DevicePoller:
                 await asyncio.sleep(backoff)
                 continue
 
-            await asyncio.sleep(interval)
+            await asyncio.sleep(max(0.0, interval - (time.perf_counter() - started)))
 
     def is_recently_active(self) -> bool:
         return time.monotonic() < self._recent_activity_until

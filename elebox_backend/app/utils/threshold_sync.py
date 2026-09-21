@@ -19,7 +19,7 @@ class ThresholdSynchronizer:
 
     async def reconcile(self, client: httpx.AsyncClient, address: str,
                         reading: TelemetryReading, threshold_a: int, threshold_b: int):
-        if not reading.autonomous_hooks:
+        if not reading.autonomous_hooks or reading.hook_alarm_ranges is not None:
             return reading
         editable = reading.threshold_edit_revision is not None
         acknowledged = not editable or (

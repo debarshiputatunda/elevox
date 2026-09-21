@@ -12,6 +12,7 @@ from app.repositories.notification_repository import NotificationRepository
 from app.telemetry.esp_alarm_controller import esp_alarm_controller
 from app.utils.datetime_utils import format_iso_utc
 from app.utils.logger import get_logger
+from app.utils.hook_ranges import both_hooks_in_ranges
 from app.utils.telemetry_parser import (
     TelemetryReading,
     is_buckle_open,
@@ -208,50 +209,62 @@ class NotificationEngine:
         elif not esp_reported_alarm:
             state.esp_reported_alarm = False
 
-        hook_a_exceeded = is_hook_threshold_exceeded(reading.hook_a, hook_a_threshold)
-        if hook_a_exceeded and not state.hook_a_exceeded:
-            state.hook_a_exceeded = True
-            payload = self._emit(
-                db,
-                box_id=box_id,
-                controller_name=controller_name,
-                severity=NotificationSeverity.CRITICAL,
-                title="Hook A Threshold Exceeded",
-                message=f"Hook A threshold exceeded on {controller_name}.",
-                notification_type=NotificationType.THRESHOLD_EXCEEDED,
-            )
-            await telemetry_ws_manager.broadcast_to_all("notification", payload)
-        elif not hook_a_exceeded:
-            state.hook_a_exceeded = False
+        if reading.hook_alarm_ranges is not None:
+            violation = both_hooks_in_ranges(reading)
+            if violation and not state.dual_hook_violation:
+                payload = self._emit(
+                    db, box_id=box_id, controller_name=controller_name,
+                    severity=NotificationSeverity.CRITICAL, title="Hook Alarm Ranges Matched",
+                    message=f"Both hooks are inside their alarm ranges on {controller_name}.",
+                    notification_type=NotificationType.THRESHOLD_EXCEEDED)
+                await telemetry_ws_manager.broadcast_to_all("notification", payload)
+            state.dual_hook_violation = violation
+            state.hook_a_exceeded = state.hook_b_exceeded = False
+        else:
+            hook_a_exceeded = is_hook_threshold_exceeded(reading.hook_a, hook_a_threshold)
+            if hook_a_exceeded and not state.hook_a_exceeded:
+                state.hook_a_exceeded = True
+                payload = self._emit(
+                    db,
+                    box_id=box_id,
+                    controller_name=controller_name,
+                    severity=NotificationSeverity.CRITICAL,
+                    title="Hook A Threshold Exceeded",
+                    message=f"Hook A threshold exceeded on {controller_name}.",
+                    notification_type=NotificationType.THRESHOLD_EXCEEDED,
+                )
+                await telemetry_ws_manager.broadcast_to_all("notification", payload)
+            elif not hook_a_exceeded:
+                state.hook_a_exceeded = False
 
-        hook_b_exceeded = is_hook_threshold_exceeded(reading.hook_b, hook_b_threshold)
-        if hook_b_exceeded and not state.hook_b_exceeded:
-            state.hook_b_exceeded = True
-            payload = self._emit(
-                db,
-                box_id=box_id,
-                controller_name=controller_name,
-                severity=NotificationSeverity.CRITICAL,
-                title="Hook B Threshold Exceeded",
-                message=f"Hook B threshold exceeded on {controller_name}.",
-                notification_type=NotificationType.THRESHOLD_EXCEEDED,
-            )
-            await telemetry_ws_manager.broadcast_to_all("notification", payload)
-        elif not hook_b_exceeded:
-            state.hook_b_exceeded = False
+            hook_b_exceeded = is_hook_threshold_exceeded(reading.hook_b, hook_b_threshold)
+            if hook_b_exceeded and not state.hook_b_exceeded:
+                state.hook_b_exceeded = True
+                payload = self._emit(
+                    db,
+                    box_id=box_id,
+                    controller_name=controller_name,
+                    severity=NotificationSeverity.CRITICAL,
+                    title="Hook B Threshold Exceeded",
+                    message=f"Hook B threshold exceeded on {controller_name}.",
+                    notification_type=NotificationType.THRESHOLD_EXCEEDED,
+                )
+                await telemetry_ws_manager.broadcast_to_all("notification", payload)
+            elif not hook_b_exceeded:
+                state.hook_b_exceeded = False
 
-        # Integrated v5 enforces persisted thresholds locally. A server pulse
-        # would latch for ten seconds even after the local condition clears.
-        if not reading.autonomous_hooks:
-            await self._sync_dual_hook_alarm(
-                db,
-                box_id=box_id,
-                controller_name=controller_name,
-                box_ip=box_ip,
-                hook_a_exceeded=hook_a_exceeded,
-                hook_b_exceeded=hook_b_exceeded,
-                state=state,
-            )
+            # Integrated v5 enforces persisted thresholds locally. A server pulse
+            # would latch for ten seconds even after the local condition clears.
+            if not reading.autonomous_hooks:
+                await self._sync_dual_hook_alarm(
+                    db,
+                    box_id=box_id,
+                    controller_name=controller_name,
+                    box_ip=box_ip,
+                    hook_a_exceeded=hook_a_exceeded,
+                    hook_b_exceeded=hook_b_exceeded,
+                    state=state,
+                )
 
         buckle_open = reading.buckle_alarm_enabled is not False and any(
             is_buckle_open(value)

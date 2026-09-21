@@ -102,3 +102,19 @@ it('mutes browser buckle audio per device while local audio remains independentl
   expect(playAirRaidSiren).toHaveBeenCalledTimes(1);
   expect(store.getState().telemetry.devices[0].buckleAlarmEnabled).toBe(true);
 });
+
+it('sounds range hook alarm only when both raw hooks match, even with buckle alarm off', () => {
+  const store = makeStore();
+  const ranges = { a: [[10, 1800], [10000, 1000000]], b: [[10, 1800], [10000, 1000000]] } as const;
+  const sample = mapBackendTelemetry({ ...base, buckle_alarm_enabled: false, hook_a: 50000, hook_b: 50000,
+    hook_alarm_ranges: JSON.parse(JSON.stringify(ranges)), hook_ranges_revision: 1, hook_a_valid: true, hook_b_valid: true, hook_raw_a: 10, hook_raw_b: 5000 });
+  store.dispatch(setDevices([sample]));
+  store.dispatch(setSafetyModeEnabled(true));
+  const Monitor = () => { useSafetyMonitor(); return null; };
+  render(<Provider store={store}><Monitor /></Provider>);
+  vi.mocked(playAirRaidSiren).mockClear();
+  act(() => store.dispatch(updateDevice({ ...sample, hookRawB: 5001 })));
+  expect(playAirRaidSiren).not.toHaveBeenCalled();
+  act(() => store.dispatch(updateDevice({ ...sample, hookRawB: 10000 })));
+  expect(playAirRaidSiren).toHaveBeenCalledTimes(1);
+});

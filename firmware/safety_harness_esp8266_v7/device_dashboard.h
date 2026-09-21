@@ -1,7 +1,7 @@
 #pragma once
 const char INDEX_HTML[] PROGMEM = R"rawliteral(
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>v7.1.0</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>v7.2.0</title>
 <style>
 :root{--bg:#141413;--pnl:#1e1e1b;--pnl2:#292923;--field:#171714;--amb:#e2bf29;--stl:#a1adb7;--txt:#faf9f5;--mut:#b1b1a8;--ok:#6dd58a;--bad:#ff8275;--cy:#77ccda;--br:#3b3b34;--ln:#55554a}
 body.light{--bg:#faf9f5;--pnl:#fff;--pnl2:#f0efea;--field:#faf9f5;--amb:#c98a1e;--stl:#586775;--txt:#141413;--mut:#64645b;--ok:#14743a;--bad:#bd3023;--cy:#00768d;--br:#deded5;--ln:#bdbdb2}
@@ -15,10 +15,11 @@ canvas{width:100%;height:160px;background:var(--pnl);border:1px solid var(--br);
 input,select,button,.button{font:inherit;min-height:44px;padding:8px 12px;border:1px solid var(--br);background:var(--field);color:var(--txt);border-radius:4px;max-width:100%}input{width:92px}input[type=range]{width:130px;padding:0;accent-color:var(--amb)}input[type=checkbox]{min-height:0}input[type=number]{font-variant-numeric:tabular-nums}button,.button{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none}button:hover,.button:hover{border-color:var(--amb)}button:disabled{opacity:.5;cursor:default}.pri,.chip.on{background:var(--amb);color:#141413;border-color:var(--amb);font-weight:700}.tg{font-weight:700}.tg.on{border-color:var(--ok);color:var(--ok)}.tg.off{color:var(--mut)}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
 .hint{color:var(--mut);font-size:12px;line-height:1.5;margin-top:8px}p{margin:8px 0}p:empty,.hint:empty{display:none}.ab{display:none;padding:12px;text-align:center;font-weight:700;letter-spacing:1px;margin-bottom:16px;border-radius:4px}.ab-b,.ab-s{background:#bd3023;color:#fff}.ab-h{background:var(--amb);color:#141413}.ab-m{background:var(--cy);color:#141413}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chip{padding:8px 12px;min-height:44px;border:1px solid var(--br);background:var(--field);font-size:12px;cursor:pointer;border-radius:4px}
 a{color:var(--amb)}body.light a:not(.button){color:#8c5e12}[hidden]{display:none!important}#predictionDetails{margin-top:8px}.stream{padding:16px;margin-bottom:16px;border-left:3px solid var(--ok)}.stream.stale{border-left-color:var(--bad)}.stream.stale #streamStatus{color:var(--bad)}#streamStats,#chartTime{font-variant-numeric:tabular-nums}#chartTime{margin:8px 0 16px}.step{margin-top:12px;padding:12px;border:1px solid var(--br);border-radius:4px}.step p{margin:0 0 8px}.step.done{border-left:3px solid var(--ok)}.calhead{margin:0 0 12px}#wifiForm{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#wifiAddresses{overflow-wrap:anywhere}
+.range-row{display:grid;grid-template-columns:32px minmax(0,1fr) 24px minmax(0,1fr);gap:8px;align-items:center;margin-bottom:12px}.range-row strong{grid-column:1/-1}.range-row input{width:100%!important}
 @media(max-width:720px){header{padding:12px 16px}.wrap{padding:16px}.g3{grid-template-columns:1fr}.g2{columns:1}.devicebar details{margin-left:0;width:100%}.net{gap:8px}.state .v{font-size:28px}.bkrow{gap:8px}.bk .bn{font-size:11px}#wifiForm{align-items:stretch;flex-direction:column}#wifiForm input{width:100%!important}#wifiForm input[type=checkbox]{width:auto!important}.alarm-setting{align-items:flex-start}.alarm-setting button{min-width:64px}}
 @media(prefers-reduced-motion:reduce){.fl{transition:none}}
 </style></head><body>
-<header><div class="dot" id="conn" aria-label="Connection status"></div><h1>v7.1.0</h1><button id="lightToggle" class="tg" style="margin-left:auto" disabled>LIGHT MODE</button></header>
+<header><div class="dot" id="conn" aria-label="Connection status"></div><h1>v7.2.0</h1><button id="lightToggle" class="tg" style="margin-left:auto" disabled>LIGHT MODE</button></header>
 <div class="wrap">
 <div class="devicebar"><span id="deviceName">Connecting…</span><span class="id" id="devid">-</span><details><summary>Edit device name</summary><form id="nameForm" class="row"><label for="nameInput">Device / hotspot name</label><input id="nameInput" maxlength="32" pattern="[A-Za-z0-9_\-](?:[A-Za-z0-9 _\-]{0,30}[A-Za-z0-9_\-])?" required autocomplete="off"><button id="nameSave" class="pri">SAVE NAME</button></form><p class="hint">1–32 letters, numbers, spaces, hyphens or underscores. No spaces at either end. Renaming also changes the hotspot name.</p></details></div><p id="deviceStatus" role="status"></p>
 <div class="net"><span id="n1">-</span><span id="n2">-</span><span id="n3">-</span></div>
@@ -66,7 +67,7 @@ a{color:var(--amb)}body.light a:not(.button){color:#8c5e12}[hidden]{display:none
 <div class="box"><h2>SENSING MODE</h2><div class="bd">
 <form id="sensingForm" class="row"><label for="sensingMode">Method</label><select id="sensingMode" disabled style="max-width:100%"><option value="0">V6 HIGH guard · A ×16, then B ×16</option><option value="1" selected>LOW guard by hook · A ×16, then B ×16</option><option value="2">Alternating LOW guard · (A, B) ×16</option></select><button id="sensingSave" class="pri" disabled>SAVE MODE</button><button id="sensingRefresh" type="button" disabled>RELOAD SAVED</button></form>
 <p id="sensingCurrent" class="hint">Waiting for saved mode…</p><p id="sensingStatus" role="status" aria-live="polite"></p>
-<p class="hint">Saved on device. Changing modes resets smoothing and loads that mode’s calibration. Threshold numbers stay unchanged: verify thresholds and collect a new reference for each mode. Finish or cancel an active calibration before switching.</p></div></div>
+<p class="hint">Saved on device. Changing modes resets smoothing and loads that mode’s calibration. Alarm ranges stay unchanged: verify ranges and collect a new reference for each mode. Finish or cancel an active calibration before switching.</p></div></div>
 <div class="box"><h2>SMOOTHING / PREDICTION</h2><div class="bd"><p id="controlStatus" role="status"></p>
 <div class="row"><button class="tg" id="tEma">EMA</button><input type="number" id="alpha" min="1" max="100"><span class="hint" style="margin:0">alpha%</span></div>
 <div class="row" style="margin-top:8px"><button class="tg" id="tPred">PREDICT</button><span class="hint" id="gL"></span><span id="tGuard" hidden></span></div>
@@ -74,12 +75,16 @@ a{color:var(--amb)}body.light a:not(.button){color:#8c5e12}[hidden]{display:none
 <div class="hint">Each hook uses the mean of 16 discharge samples. The selected mode sets the other hook’s guard level and sampling order. Coupling resets passively. These readings do not confirm mechanical fastening.</div>
 </div></div>
 
-<div class="box"><h2>HOOK ALARM THRESHOLDS</h2><div class="bd">
-<form id="thresholdForm" class="row"><label for="limitA">Hook A</label><input id="limitA" type="number" min="0" max="100000" step="1" required style="width:100px">
-<label for="limitB">Hook B</label><input id="limitB" type="number" min="0" max="100000" step="1" required style="width:100px">
-<button class="pri" id="limitSave">SAVE</button><button id="limitRefresh" type="button">REFRESH</button></form>
-<div id="thrH" class="hint">Waiting for telemetry</div><p id="limitStatus" role="status"></p>
-<p class="hint">Saved on device immediately. Syncs to the website when connected. Competing website edits take priority. Zero is a literal threshold.</p></div></div>
+<div class="box"><h2>HOOK ALARM RANGES</h2><div class="bd">
+<form id="rangeForm">
+<div class="range-row"><strong>Hook A · range 1</strong><label for="a0_min">From</label><input id="a0_min" type="number" min="0" max="1000000" step="1" required disabled style="width:116px"><label for="a0_max">To</label><input id="a0_max" type="number" min="0" max="1000000" step="1" required disabled style="width:116px"></div>
+<div class="range-row"><strong>Hook A · range 2</strong><label for="a1_min">From</label><input id="a1_min" type="number" min="0" max="1000000" step="1" required disabled style="width:116px"><label for="a1_max">To</label><input id="a1_max" type="number" min="0" max="1000000" step="1" required disabled style="width:116px"></div>
+<div class="range-row"><strong>Hook B · range 1</strong><label for="b0_min">From</label><input id="b0_min" type="number" min="0" max="1000000" step="1" required disabled style="width:116px"><label for="b0_max">To</label><input id="b0_max" type="number" min="0" max="1000000" step="1" required disabled style="width:116px"></div>
+<div class="range-row"><strong>Hook B · range 2</strong><label for="b1_min">From</label><input id="b1_min" type="number" min="0" max="1000000" step="1" required disabled style="width:116px"><label for="b1_max">To</label><input id="b1_max" type="number" min="0" max="1000000" step="1" required disabled style="width:116px"></div>
+<div class="row" style="margin-top:8px"><button class="pri" id="rangeSave" disabled>SAVE RANGES</button><button id="rangeRefresh" type="button" disabled>RELOAD SAVED</button></div></form>
+<div id="rangeCurrent" class="hint">Waiting for saved ranges…</div><p id="rangeStatus" role="status" aria-live="polite"></p>
+<p class="hint">The hook alarm requires BOTH hooks inside either of their own ranges; they may be in different ranges. Endpoints are inclusive, in raw discharge units (0–1,000,000). Range 1 must end before range 2 starts. Defaults: 10–1,800 and 10,000–1,000,000 for each hook.</p>
+<p class="hint">Alarm uses fresh unsmoothed readings. Main meters and charts show smoothed readings. Saved on device and synchronized with the website. Website changes appear here unless you have unsaved edits.</p><p id="rangeRaw" class="hint"></p></div></div>
 
 <div class="box" id="calibrationBox"><h2>OPTIONAL GUIDED CALIBRATION</h2><div class="bd"><p class="hint calhead">Works immediately with defaults. For a reference, collect 5 seconds in each condition. Nothing starts until you press its READY button. Keep hooks still during collection.</p><label for="referenceMode">Reference contact</label> <select id="referenceMode"><option value="1">Hand</option><option value="2">Metal</option></select><p id="calibrationProvenance" class="hint"></p><p id="calibrationStatus" role="status" aria-live="polite"></p>
 <div class="step" id="step1"><p>1 · FREE — Leave both hooks separate, untouched and away from metal.</p><button id="calReady1">READY · CAPTURE FREE (5s)</button></div>
@@ -134,27 +139,44 @@ $('buckleAlarmToggle').onclick=async()=>{
  catch(e){D.buckle_alarm_enabled=previous;$('buckleAlarmStatus').textContent='Not saved: '+e.message;}
  finally{settingsEpoch++;buckleSaving=false;showBuckleAlarm(D.buckle_alarm_enabled);tick()}
 };
-let limitDirty=false,limitSaving=false,limitRevision=0,limitSavedTarget=null;
-function showLimits(d){
- if(!limitDirty && !limitSaving){$('limitA').value=d.threshold_a;$('limitB').value=d.threshold_b;limitRevision=d.threshold_edit_revision}
- $('thrH').textContent='Device: A '+d.threshold_a+' / B '+d.threshold_b+(d.hook_alarm_enabled?'':' (not armed)');
- if(limitSavedTarget && !d.threshold_edit_pending){
-  $('limitStatus').textContent=d.threshold_a===limitSavedTarget[0]&&d.threshold_b===limitSavedTarget[1]?'Device and website synchronized.':'Website conflict resolved: using website values.';limitSavedTarget=null;
- }
+const RANGE_IDS=['a0_min','a0_max','a1_min','a1_max','b0_min','b0_max','b1_min','b1_max'];
+let rangeDirty=false,rangeSaving=false,rangeRevision=null,rangeLatest=null;
+function validRanges(r){return r&&['a','b'].every(h=>Array.isArray(r[h])&&r[h].length===2&&r[h].every(b=>Array.isArray(b)&&b.length===2&&b.every(v=>Number.isInteger(v)&&v>=0&&v<=1000000)&&b[0]<=b[1])&&r[h][0][1]<r[h][1][0])}
+function validRangeRevision(v){return Number.isInteger(v)&&v>=1&&v<=4294967295}
+function rangeRevisionOlder(candidate,current){return candidate!==current&&((candidate-current)>>>0)>=2147483648}
+function rangeControls(){const locked=rangeSaving||!rangeLatest;for(const id of RANGE_IDS)$(id).disabled=locked;$('rangeSave').disabled=locked;$('rangeRefresh').disabled=locked}
+function showRanges(d,restarted=false){
+ const r=d.hook_alarm_ranges,revision=d.hook_ranges_revision;
+ if(!validRanges(r)||!validRangeRevision(revision))return;
+ if(restarted){rangeLatest=null;if(rangeDirty)rangeRevision=null;if(rangeDirty)$('rangeStatus').textContent='Device restarted. Reload saved ranges before saving your edits.'}
+ if(rangeLatest&&rangeRevisionOlder(revision,rangeLatest.revision))return;
+ rangeLatest={ranges:r,revision};
+ if(!rangeDirty&&!rangeSaving){RANGE_IDS.forEach((id,i)=>$(id).value=r[i<4?'a':'b'][Math.floor(i%4/2)][i%2]);rangeRevision=revision}
+ $('rangeCurrent').textContent='Saved: A '+r.a.map(b=>b.join('–')).join(' / ')+' · B '+r.b.map(b=>b.join('–')).join(' / ')+' · revision '+revision;
+ if(rangeDirty&&revision!==rangeRevision)$('rangeStatus').textContent='Saved ranges changed. Your edits are preserved. Reload saved ranges before editing again.';
+ $('rangeRaw').textContent='Alarm raw: A '+(d.hook_a_valid?d.hook_raw_a:'invalid')+' · B '+(d.hook_b_valid?d.hook_raw_b:'invalid');rangeControls();
 }
-for(const id of ['limitA','limitB'])$(id).addEventListener('input',()=>{if(!limitDirty && D)limitRevision=D.threshold_edit_revision;limitDirty=true});
-$('limitRefresh').onclick=()=>{limitDirty=false;limitSavedTarget=null;if(D)showLimits(D);$('limitStatus').textContent='Current device values loaded.'};
-$('thresholdForm').onsubmit=async e=>{
- e.preventDefault();if(limitSaving||!D)return;
- limitSaving=true;settingsEpoch++;$('limitSave').disabled=true;
- const a=Number($('limitA').value),b=Number($('limitB').value);
+for(const id of RANGE_IDS)$(id).addEventListener('input',()=>{rangeDirty=true;$('rangeStatus').textContent='Unsaved ranges. Press SAVE RANGES to apply.'});
+$('rangeRefresh').onclick=()=>{if(rangeSaving||!rangeLatest)return;rangeDirty=false;showRanges({...D,hook_alarm_ranges:rangeLatest.ranges,hook_ranges_revision:rangeLatest.revision});$('rangeStatus').textContent='Current saved ranges loaded.'};
+$('rangeForm').onsubmit=async e=>{
+ e.preventDefault();if(rangeSaving||!rangeLatest)return;
+ rangeSaving=true;const epoch=++settingsEpoch;rangeControls();$('rangeStatus').textContent='Saving ranges…';
  try{
-  if(!Number.isInteger(a)||!Number.isInteger(b)||a<0||b<0||a>100000||b>100000)throw Error('Use integers from 0 to 100000');
-  const response=await deviceFetch('/thresholds',{method:'POST',body:new URLSearchParams({threshold_a:a,threshold_b:b,source:'device',expected_revision:limitRevision})});
+  const values=RANGE_IDS.map(id=>$(id).value.trim());
+  if(values.some(v=>!/^\d+$/.test(v)))throw Error('Use whole numbers from 0 to 1000000');
+  const nums=values.map(Number),ranges={a:[nums.slice(0,2),nums.slice(2,4)],b:[nums.slice(4,6),nums.slice(6,8)]};
+  if(!validRanges(ranges))throw Error('Each range needs min ≤ max; range 1 must end before range 2 starts (0–1000000)');
+  if(rangeRevision!==rangeLatest.revision)throw Error('Revision conflict. Reload saved ranges before editing again');
+  const body=new URLSearchParams({expected_revision:rangeRevision});RANGE_IDS.forEach((id,i)=>body.set(id,nums[i]));
+  const response=await deviceFetch('/hook-ranges',{method:'POST',body});
+  if(response.status===409)throw Error('Revision conflict. Reload saved ranges before editing again');
   if(!response.ok)throw Error(await response.text());
-  limitDirty=false;limitSavedTarget=[a,b];$('limitStatus').textContent='Saved on device; awaiting website sync.';
- }catch(e){$('limitStatus').textContent='Not saved: '+e.message}
- finally{settingsEpoch++;limitSaving=false;$('limitSave').disabled=false}
+  const result=await response.json();if(epoch!==settingsEpoch)throw Error('Settings changed while saving; reload saved ranges to verify');
+  if(result.saved!==true||!validRanges(result.hook_alarm_ranges)||!validRangeRevision(result.hook_ranges_revision)||(result.hook_ranges_revision!==rangeRevision&&result.hook_ranges_revision!==(rangeRevision===4294967295?1:rangeRevision+1))||!['a','b'].every(h=>JSON.stringify(result.hook_alarm_ranges[h])===JSON.stringify(ranges[h])))throw Error('Invalid save acknowledgment; reload saved ranges to verify');
+  D.hook_alarm_ranges=result.hook_alarm_ranges;D.hook_ranges_revision=result.hook_ranges_revision;rangeDirty=false;
+  $('rangeStatus').textContent='Saved on device. Website synchronization follows when connected.';
+ }catch(error){rangeDirty=true;$('rangeStatus').textContent='Not confirmed: '+error.message}
+ finally{settingsEpoch++;rangeSaving=false;showRanges(D);rangeControls();tick()}
 };
 const PRE=['Free','Body both','Hooks shorted','Grounded metal','Hook A only','Hook B only','Over clothing','Anchor point','Mixed usage'];
 const PN=['Accelerating','Double pulse','Long steady','Rapid chirp','Triple burst','Slow beep','SOS','Urgent burst'];
@@ -170,7 +192,7 @@ $('sensingRefresh').onclick=()=>{sensingDirty=false;showSensing(D);$('sensingSta
 $('sensingForm').onsubmit=async e=>{e.preventDefault();if(sensingSaving||!Number.isInteger(D.sensing_mode))return;
  const mode=Number($('sensingMode').value),epoch=++sensingEpoch;sensingSaving=true;settingsEpoch++;sensingControls();$('sensingStatus').textContent='Saving mode…';
  try{const response=await deviceFetch('/sensing',{method:'POST',body:new URLSearchParams({mode})});if(!response.ok)throw Error(await response.text());const result=await response.json();if(epoch!==sensingEpoch)return;if(result.saved!==true||result.mode!==mode)throw Error('Device did not confirm selected mode');
- sensingDirty=false;$('sensingMode').value=String(result.mode);$('sensingStatus').textContent='Saved '+SENSING_NAMES[result.mode]+'. Verify thresholds and this mode’s calibration.';
+ sensingDirty=false;$('sensingMode').value=String(result.mode);$('sensingStatus').textContent='Saved '+SENSING_NAMES[result.mode]+'. Verify alarm ranges and this mode’s calibration.';
  }catch(error){if(epoch===sensingEpoch){sensingDirty=true;$('sensingStatus').textContent='Not saved: '+error.message}}
  finally{if(epoch===sensingEpoch){sensingSaving=false;settingsEpoch++;sensingControls();tick()}}
 };
@@ -222,7 +244,7 @@ const colors=getComputedStyle(document.body);cx.strokeStyle=colors.getPropertyVa
 const pl=(z,c)=>{cx.beginPath();cx.strokeStyle=c;cx.lineWidth=2;z.forEach((v,i)=>{const x=X(i),y=Y(v);i?cx.lineTo(x,y):cx.moveTo(x,y)});cx.stroke()};
 pl(A,colors.getPropertyValue('--amb'));pl(B,colors.getPropertyValue('--stl'));
 cx.fillStyle=colors.getPropertyValue('--mut');cx.font='10px monospace';cx.fillText(Math.round(mx),5,12);cx.fillText(Math.round(mn),5,h-5)}
-async function tick(){if(busy||sensingSaving||buckleSaving||(document.hidden&&!rec))return;busy=true;const epoch=settingsEpoch;
+async function tick(){if(busy||sensingSaving||buckleSaving||rangeSaving||(document.hidden&&!rec))return;busy=true;const epoch=settingsEpoch;
 try{const response=await deviceFetch('/data',{cache:'no-store'});if(!response.ok)throw Error('HTTP '+response.status);const d=await response.json();if(epoch!==settingsEpoch)return;
 const now=performance.now(),restarted=lastResponse&&d.uptime_ms<lastUptime,key=d.sample_seq+':'+d.sample_uptime_ms,fresh=key!==lastSampleKey||restarted;
 const sensingChanged=lastResponse&&(d.sensing_mode!==D.sensing_mode||d.sensing_revision!==D.sensing_revision);
@@ -263,7 +285,7 @@ tg($('tEma'),d.ema);tg($('tPred'),d.predict);tg($('tGuard'),d.guard==='HIGH');tg
 $('tGuard').textContent='GUARD '+d.guard;$('tBuz').textContent=d.buzz?'BUZZER ON':'BUZZER OFF';
 $('volV').textContent=d.vol;
 $('volH').textContent=d.passive?'PWM drive: volume and pitch both active.':'Active buzzer has its own oscillator, so volume control is limited. Full range arrives with the bare piezo.';
-showLimits(d);
+showRanges(d,restarted);
 if(!init){$('alpha').value=d.alpha;$('mSh').value=d.msh;$('mBr').value=d.mbr;$('pB').value=d.pb;$('pH').value=d.ph;$('pM').value=d.pm;$('vol').value=d.vol;$('gain').value=d.gain;$('hd').value=d.hd;init=true}
 if(fresh){A.push(d.raw1);B.push(d.raw2);M.push(d.mutual);if(A.length>MAX){A.shift();B.shift();M.shift()}draw();$('chartTime').textContent='Last sample '+ts(new Date())+' · #'+d.sample_seq+' · '+A.length+' samples shown · A amber / B slate'}
 if(rec && fresh && rows.length<MAX_ROWS){rows.push({sensingMode:d.sensing_mode,sensingName:d.sensing_name,sensingRevision:d.sensing_revision,seq:d.sample_seq,uptime:d.sample_uptime_ms,predict:d.predict,prediction:d.state,calibrated:d.prediction_calibrated,reference:d.calibration_mode,t:new Date(),l:$('lab').value||'unlabeled',a:d.raw1,b:d.raw2,ap:d.a_p2p,bp:d.b_p2p,m:d.mutual,k:d.link,la:d.loadA,lb:d.loadB,ha:d.hkAn,hb:d.hkBn,s:d.state,b1:d.b1,b2:d.b2,b3:d.b3,av:d.hook_a_valid,bvalid:d.hook_b_valid,mv:d.mutual_valid,at:d.a_timeouts,bt:d.b_timeouts});$('cnt').textContent=rows.length;if(rows.length===MAX_ROWS){rec=false;$('bRec').textContent='START';$('bRec').className='pri';$('recordStatus').textContent='10,000-row limit reached. Recording stopped. Download CSV, then CLEAR to start a new buffer.'}}
@@ -334,6 +356,6 @@ $('wifiForm').onsubmit=e=>{e.preventDefault();networkAction('save',{ssid:$('wifi
 $('wifiConnect').onclick=()=>networkAction('connect');$('wifiDefault').onclick=()=>networkAction('default');
 $('wifiDelete').onclick=()=>networkAction('delete');$('wifiForget').onclick=()=>networkAction('disconnect');
 setInterval(pollWifi,5000);pollWifi();
-setInterval(freshStatus,250);setInterval(tick,500);document.addEventListener('visibilitychange',()=>{freshStatus();tick()});tick();
+setInterval(freshStatus,250);setInterval(tick,100);document.addEventListener('visibilitychange',()=>{freshStatus();tick()});tick();
 </script></body></html>
 )rawliteral";

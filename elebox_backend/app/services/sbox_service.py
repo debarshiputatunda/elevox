@@ -23,6 +23,43 @@ from app.utils.esp_client import normalize_esp_base_url
 class SboxService:
 
     @staticmethod
+    async def update_hook_ranges(db: Session, box_id: int, request):
+        from app.utils.hook_ranges import validate_hook_ranges
+        box = SboxRepository.get_by_id(db, box_id)
+        if box is None:
+            raise HTTPException(404, "Elevox not found")
+        if not box.box_ip or not box.box_ip.strip():
+            raise HTTPException(409, "Elevox has no device address")
+        ranges = validate_hook_ranges({'a': request.a, 'b': request.b})
+        form = {f"{hook}{index}_{bound}": str(pair[offset])
+                for hook, intervals in ranges.items() for index, pair in enumerate(intervals)
+                for offset, bound in enumerate(('min', 'max'))}
+        form['expected_revision'] = str(request.expected_revision)
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{normalize_esp_base_url(box.box_ip)}/hook-ranges", data=form,
+                    timeout=TELEMETRY_REQUEST_TIMEOUT_S)
+                if response.status_code == 409:
+                    raise HTTPException(409, "Device ranges changed; refresh before saving")
+                if response.status_code in (404, 405, 501):
+                    raise HTTPException(409, "Device firmware does not support hook ranges")
+                response.raise_for_status()
+                saved = response.json()
+                if (not isinstance(saved, dict) or saved.get('saved') is not True
+                        or validate_hook_ranges(saved.get('hook_alarm_ranges')) != ranges
+                        or type(saved.get('hook_ranges_revision')) is not int
+                        or saved['hook_ranges_revision'] not in (request.expected_revision,
+                            (request.expected_revision + 1) % 2**32 or 1)):
+                    raise ValueError('Unconfirmed hook ranges')
+        except httpx.RequestError as exc:
+            raise HTTPException(503, "Device is unreachable; hook ranges were not confirmed") from exc
+        except (httpx.HTTPStatusError, ValueError) as exc:
+            raise HTTPException(502, "Device did not confirm saved hook ranges") from exc
+        return {'confirmed': True, 'confirmed_at': datetime.now(timezone.utc).isoformat(),
+                'hook_alarm_ranges': ranges, 'hook_ranges_revision': saved['hook_ranges_revision']}
+
+    @staticmethod
     async def update_buckle_alarm(db: Session, box_id: int, enabled: bool):
         box = SboxRepository.get_by_id(db, box_id)
         if box is None:

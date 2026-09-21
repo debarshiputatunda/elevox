@@ -14,10 +14,11 @@
 #include "wifi_settings.h"
 #include "network_profiles.h"
 #include "threshold_settings.h"
+#include "hook_ranges.h"
 #include "device_preferences.h"
 #include "prediction_calibration.h"
 using namespace prediction_calibration;
-const char* FIRMWARE_VERSION="v7.1.0";
+const char* FIRMWARE_VERSION="v7.2.0";
 DevicePreferences preferences;
 PredictionCalibration calibration={};
 CalibrationSession calibrationSession;
@@ -67,7 +68,7 @@ ESP8266HTTPUpdateServer httpUpdater;
 
 #include "hook_sensing.h"
 #include "sensing_settings.h"
-const unsigned long SENSE_PERIOD_MS = 120;
+const unsigned long SENSE_PERIOD_MS = 50;
 bool mutualValid=false;
 HookFrameSampler hookSampler;
 SensingMode sensingMode=LOW_BATCH;
@@ -104,6 +105,7 @@ struct Pat { const uint16_t* d; uint8_t n; };
 const Pat PATS[]={ {NULL,0},{P_DOUBLE,4},{P_LONG,2},{P_CHIRP,2},{P_TRIPLE,6},{P_SLOW,2},{P_SOS,18},{P_URGENT,6} };
 const uint8_t NPATS=8;
 
+HookRanges hookRanges=defaultHookRanges();
 ThresholdState thresholdState;
 uint32_t& thresholdA=thresholdState.a;
 uint32_t& thresholdB=thresholdState.b;
@@ -286,10 +288,12 @@ bool parseThresholdArg(const char* name, uint32_t& value){
 }
 
 #include "tuning_transaction.h"
+#include "hook_ranges_runtime.h"
 #include "device_runtime.h"
 #include "buckle_alarm_runtime.h"
 
 void setupEndpoints(){
+  server.on("/hook-ranges",HTTP_POST,saveHookRangeRequest);
   server.on("/buckle-alarm",HTTP_POST,setBuckleAlarm);
   server.on("/sensing",HTTP_POST,saveSensingSelection);
   server.on("/device",HTTP_POST,saveDevicePreferences);
@@ -307,30 +311,7 @@ void setupEndpoints(){
   server.on("/ncsi.txt", [](){server.send(200,"text/plain","Microsoft NCSI");});
   server.on("/favicon.ico", [](){server.send(204,"text/plain","");});
   server.onNotFound([](){server.send(404,"text/plain","Open http://192.168.4.1/ for SBox settings");});
-  server.on("/thresholds", HTTP_POST, [](){
-    uint32_t a,b,expected=0;
-    String raw=server.arg("expected_revision");
-    bool valid=raw.length()>0 && raw.length()<=10;
-    uint64_t parsed=0;
-    for(unsigned i=0;i<raw.length();i++){if(raw[i]<'0'||raw[i]>'9')valid=false;else parsed=parsed*10+(raw[i]-'0');}
-    if(parsed>UINT32_MAX)valid=false;expected=(uint32_t)parsed;
-    if(!valid || !parseThresholdArg("threshold_a",a)||!parseThresholdArg("threshold_b",b)){
-      server.send(400,"text/plain","Two integer limits (0-100000) and expected_revision required");return;
-    }
-    bool local=server.arg("source")=="device";
-    ThresholdState previous=thresholdState;
-    if(!updateThresholds(thresholdState,a,b,expected,local)){
-      server.send(409,"text/plain","Thresholds changed. Refresh values before saving again.");return;
-    }
-    if(memcmp(&previous,&thresholdState,sizeof(previous))!=0 && !saveConfig()){
-      thresholdState=previous;
-      EEPROM.put(44,thresholdA);EEPROM.put(48,thresholdB);EEPROM.put(52,(uint8_t)hookAlarmEnabled);
-      EEPROM.put(56,previous);EEPROM.put(80,thresholdChecksum(previous));
-      server.send(500,"text/plain","Thresholds could not be saved");return;
-    }
-    hookViolation=hooksExceeded(hookA.valid?(int32_t)dispA:-1,hookB.valid?(int32_t)dispB:-1,thresholdA,thresholdB,hookAlarmEnabled);
-    server.send(200,"application/json","{\"saved\":true}");
-  });
+  server.on("/thresholds", HTTP_POST, [](){server.send(409,"text/plain","This firmware uses /hook-ranges; update the website");});
   server.on("/", showSettingsPage);
 
   server.on("/config", [](){
@@ -370,12 +351,13 @@ void setupEndpoints(){
     char sip[20]; if(up) strncpy(sip,WiFi.localIP().toString().c_str(),sizeof(sip)); else strcpy(sip,"-");
     sip[sizeof(sip)-1]=0;
     char aip[20]; strncpy(aip,WiFi.softAPIP().toString().c_str(),sizeof(aip)); aip[sizeof(aip)-1]=0;
-    static char buf[2600];
+    char ranges[240];rangeJson(ranges,sizeof(ranges),hookRanges);
+    static char buf[3000];
     snprintf(buf,sizeof(buf),
-      "{\"sensing_mode\":%u,\"sensing_name\":\"%s\",\"sensing_revision\":%u,\"device_name\":\"%s\",\"light_mode\":%s,\"sample_seq\":%u,\"sample_uptime_ms\":%u,\"sample_age_ms\":%u,\"uptime_ms\":%u,"
+      "{%s,\"hook_raw_a\":%d,\"hook_raw_b\":%d,\"sensing_mode\":%u,\"sensing_name\":\"%s\",\"sensing_revision\":%u,\"device_name\":\"%s\",\"light_mode\":%s,\"sample_seq\":%u,\"sample_uptime_ms\":%u,\"sample_age_ms\":%u,\"uptime_ms\":%u,"
       "\"prediction_calibrated\":%s,\"calibration_mode\":\"%s\",\"calibration_capture_mode\":\"%s\",\"calibration_running\":%s,\"calibration_step\":%u,\"calibration_completed\":%u,\"calibration_remaining_ms\":%u,\"calibration_error\":\"%s\","
       "\"threshold_edit_revision\":%u,\"threshold_edit_pending\":%s,\"threshold_base_a\":%u,\"threshold_base_b\":%u,\"threshold_base_valid\":%s,"
-      "\"protocol\":\"elevox-v5/1\",\"firmware\":\"v7.1.0\",\"mutual_valid\":%s,\"a_timeouts\":%u,\"b_timeouts\":%u,\"id\":\"%s\",\"guard\":\"%s\",\"raw1\":%d,\"raw2\":%d,\"a_p2p\":%u,\"b_p2p\":%u,"
+      "\"protocol\":\"elevox-v5/1\",\"firmware\":\"v7.2.0\",\"mutual_valid\":%s,\"a_timeouts\":%u,\"b_timeouts\":%u,\"id\":\"%s\",\"guard\":\"%s\",\"raw1\":%d,\"raw2\":%d,\"a_p2p\":%u,\"b_p2p\":%u,"
       "\"loadA\":%d,\"loadB\":%d,\"link\":%d,\"hkA\":%u,\"hkB\":%u,\"hkAn\":\"%s\",\"hkBn\":\"%s\","
       "\"batt_pct\":%d,\"batt_v\":%.2f,\"b1\":%s,\"b2\":%s,\"b3\":%s,"
       "\"threshold_a\":%u,\"threshold_b\":%u,\"hook_alarm_enabled\":%s,\"buckle_alarm_enabled\":%s,\"hook_a_valid\":%s,\"hook_b_valid\":%s,\"hookviol\":%s,\"mutual\":%u,\"state\":\"%s\","
@@ -384,6 +366,7 @@ void setupEndpoints(){
       "\"buzz\":%s,\"vol\":%u,\"passive\":%s,"
       "\"alarm\":%s,\"mode\":\"%s\",\"sta_up\":%s,\"sta_ip\":\"%s\",\"ap_ip\":\"%s\","
       "\"rssi\":%d,\"heap\":%u,\"host\":\"%s.local\"}",
+      ranges,hookA.valid?(int)hookA.mean:-1,hookB.valid?(int)hookB.mean:-1,
       (unsigned)sensingMode,sensingModeName(sensingMode),sensingRevision,preferences.name,preferences.light?"true":"false",sampleSequence,sampleStamp,sampleSequence?(uint32_t)(millis()-sampleStamp):UINT32_MAX,(uint32_t)millis(),
       validCalibration(calibration)?"true":"false",validCalibration(calibration)?(calibration.mode==1?"hand":"metal"):"none",
       calibrationSession.mode()==1?"hand":calibrationSession.mode()==2?"metal":"none",calibrationSession.running()?"true":"false",(unsigned)calibrationSession.step(),(unsigned)calibrationSession.completedSteps(),calibrationSession.remainingMs(millis()),
@@ -417,6 +400,8 @@ void setup(){
   pinMode(LED_PIN,OUTPUT); pinMode(BUZZER_PIN,OUTPUT);
   digitalWrite(LED_PIN,LOW); digitalWrite(BUZZER_PIN,LOW);
   loadConfig();
+  hookRanges=loadHookRanges(EEPROM);
+  hookAlarmEnabled=true;
   buckleAlarmEnabled=loadBuckleAlarm(EEPROM);
   loadRouterWifi();
   WiFi.persistent(false);
@@ -467,7 +452,7 @@ void advanceSensing(uint32_t now){
       dispA=hookA.valid?(uint32_t)emaA:0;dispB=hookB.valid?(uint32_t)emaB:0;
     }else{emaA=emaB=-1;dispA=hookA.mean;dispB=hookB.mean;}
     if(predictOn)updateState();
-    hookViolation=hooksExceeded(hookA.valid?(int32_t)dispA:-1,hookB.valid?(int32_t)dispB:-1,thresholdA,thresholdB,hookAlarmEnabled);
+    hookViolation=bothHooksInRanges(hookA.valid?(int32_t)hookA.mean:-1,hookB.valid?(int32_t)hookB.mean:-1,hookRanges);
     sampleSequence++;if(!sampleSequence)sampleSequence=1;
     sampleStamp=millis();frameDuration=sampleStamp-frameStarted;
     calibrationSession.observe(sampleStamp,hookA.mean,hookB.mean,hookA.valid,hookB.valid);

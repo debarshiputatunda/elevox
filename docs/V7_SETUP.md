@@ -1,4 +1,4 @@
-# V7.1.0: buckle alarm control and selectable sensing
+# V7.2.0: dual alarm ranges and faster live updates
 
 V7 retains the v6.2 hotspot, router profiles, threshold synchronization, alarms, prediction/calibration, recording, device name/theme and diagnostics. V6 remains separately available. The active sketch is `firmware/safety_harness_esp8266_v7/safety_harness_esp8266_v7.ino`.
 
@@ -24,13 +24,13 @@ Switching discards any incomplete frame, releases pins, clears old smoothing/pre
 
 Each mode has its own optional saved Hand/Metal calibration. Existing v6 calibration belongs only to V6 HIGH guard. New LOW modes start without calibration and can use the same Free → A → B five-second wizard. Returning to a mode restores its saved reference. Clearing calibration affects only the selected mode. Calibration still does not modify hook alarm thresholds.
 
-**Numeric alarm thresholds stay unchanged when switching modes.** Readings can change with guard polarity and ordering; check those limits against measurements in the selected mode. Website synchronization continues to apply its saved thresholds. A successful mode save confirms storage, not suitability of existing limits. Failed saves retain the previous active mode and EEPROM buffer.
+**Numeric alarm ranges stay unchanged when switching modes.** Readings can change with guard polarity and ordering; check those limits against measurements in the selected mode. The device owns the v7.2 range configuration; both interfaces edit that saved configuration. A successful mode save confirms storage, not suitability of existing limits. Failed saves retain the previous active mode and EEPROM buffer.
 
 Prediction tuning controls outside the guided calibration (baseline, link limits, delta, gain) retain their existing shared settings. No classification proves mechanical fastening or reliably separates touching hooks from hooks on the same conductive scaffold.
 
 ## Telemetry, CSV and storage
 
-The protocol remains `elevox-v5/1`; `firmware` is `v7.1.0`. New fields are `sensing_mode` (0/1/2), `sensing_name` (`v6-high` / `low-batch` / `low-alternating`) and `sensing_revision` (increments on runtime mode changes). `guard` reports HIGH or LOW. Timeout counters remain visible even when a LOW-mode partial batch yields a valid mean.
+The protocol remains `elevox-v5/1`; `firmware` is `v7.2.0`. New fields are `sensing_mode` (0/1/2), `sensing_name` (`v6-high` / `low-batch` / `low-alternating`) and `sensing_revision` (increments on runtime mode changes). `guard` reports HIGH or LOW. Timeout counters remain visible even when a LOW-mode partial batch yields a valid mean.
 
 POST `/sensing` accepts one form field `mode=0`, `1`, or `2`. Invalid values return 400, active calibration returns 409, failed persistence returns 500. Success returns `{ "saved": true, "mode": 1 }` for the default mode. The existing device page exposes these controls; no separate website/backend change is required by the compatible data contract.
 
@@ -40,7 +40,7 @@ EEPROM uses the existing 2048-byte allocation. Alarm settings, network profiles 
 
 ## Build and install
 
-Run `firmware/build_v7.sh` with ESP8266 core 3.1.2. It builds a credential-free NodeMCU v2 image at 80 MHz, 4 MB flash / 2 MB filesystem, into `firmware/releases/elevox-v7.1.0.bin` and a SHA-256 file. The script rejects images at or above 1,000,000 bytes, below the requested 2 MB ceiling.
+Run `firmware/build_v7.sh` with ESP8266 core 3.1.2. It builds a credential-free NodeMCU v2 image at 80 MHz, 4 MB flash / 2 MB filesystem, into `firmware/releases/elevox-v7.2.0.bin` and a SHA-256 file. The script rejects images at or above 1,000,000 bytes, below the requested 2 MB ceiling.
 
 Upload the `.bin` through **Firmware update** at `http://192.168.4.1/update`, using the firmware field. The currently flashed device still needs enough OTA free space. Saved network/name/theme/threshold settings remain. Open the hotspot page manually after reboot, select the desired mode, then verify readings, thresholds and optional calibration.
 
@@ -67,3 +67,17 @@ The website requires device-management permission and an online device with comp
 Device POST `/buckle-alarm` accepts form `enabled=0` or `enabled=1` and returns `{ "saved": true, "enabled": false }` when disabling succeeds. Website PATCH `/sboxes/{id}/buckle-alarm` accepts JSON `{ "enabled": false }`. Telemetry and diagnostics expose `buckle_alarm_enabled`. A validated 12-byte EEPROM record at offset 1664 defaults ON when absent or corrupt. No database migration is required.
 
 The device UI uses consistent spacing, simple borders and warm light/dark colors without external assets. Source tests, mocked browser checks and compilation pass; physical alarm behavior and RF stability still require device validation.
+
+## Dual hook alarm ranges (v7.2.0)
+
+Both Hook A and Hook B must each be inside either of their two inclusive alarm ranges. Defaults for each hook are **10–1,800** and **10,000–1,000,000**. The hooks may match different bands: A=500 and B=20,000 triggers the hook alarm; A=500 and B=5,000 does not. Each hook's two bands must be ordered and nonoverlapping. All eight endpoints are editable on the device page and website.
+
+Alarms compare valid, fresh, unsmoothed 16-sample means (`hook_raw_a` and `hook_raw_b`). The existing `raw1`/`raw2` fields retain their smoothed display values for compatibility. Invalid readings continue to use the independent sensor alarm. Buckle and manual alarms remain independent.
+
+The firmware initializes the new ranges to the requested defaults on first upgrade; it does not convert the old single-threshold values into ranges. New range records use 44 bytes at EEPROM offset 1680. Existing network, buckle, calibration, theme and sensing settings are preserved. The device is authoritative: website PATCH `/sboxes/{id}/hook-ranges` forwards eight bounds and an expected revision to device POST `/hook-ranges`, confirms the exact saved values, and reports offline/write/conflict errors. No database migration is required. Old `/thresholds` writes are rejected by v7.2; upgraded backends skip legacy synchronization for range-capable devices.
+
+Firmware POST form fields: `a0_min`, `a0_max`, `a1_min`, `a1_max`, `b0_min`, `b0_max`, `b1_min`, `b1_max`, `expected_revision`. Telemetry includes `hook_alarm_ranges: {a:[[min,max],[min,max]], b:[[min,max],[min,max]]}` and `hook_ranges_revision`. Concurrent stale edits return 409. Unchanged saves avoid flash writes.
+
+The minimum sensing frame period is reduced from 120 to 50 ms. Device-page requests use a 100 ms timer with no overlapping requests; active backend polling targets 100 ms between request starts instead of adding a full delay after each response. Idle/offline backoff remains. Alarm decisions no longer wait for the display EMA to settle. These are configured cadences, not measured end-to-end guarantees: 32 discharge samples can still take about 320 ms when saturated, and Wi-Fi/HTTP adds delay. Sampling polarity, 16-sample count and timeout behavior are retained.
+
+Tests cover inclusive boundaries, mixed bands, one-hook-only rejection, persistence/failure rollback, revision conflicts, strict acknowledgments, stale packets, independent buckle behavior and nonoverlapping polling. Physical device latency and alarm behavior still need on-device verification.

@@ -19,6 +19,12 @@ class TelemetrySnapshotResponse(BaseModel):
     buckle2: int
     buckle3: int
     buckle_alarm_enabled: bool | None = None
+    hook_alarm_ranges: dict[str, list[list[int]]] | None = None
+    hook_ranges_revision: int | None = None
+    hook_raw_a: int | None = None
+    hook_raw_b: int | None = None
+    hook_a_valid: bool | None = None
+    hook_b_valid: bool | None = None
     alarm_active: bool
     connectivity: str
     is_online: bool

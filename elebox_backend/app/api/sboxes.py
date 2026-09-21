@@ -14,6 +14,7 @@ from app.schemas.box_assignment_schema import (
 from app.schemas.sbox_schema import (
     MessageResponse,
     SBoxBuckleAlarmRequest,
+    SBoxHookRangesRequest,
     SBoxBuckleAlarmResponse,
     SBoxCreateRequest,
     SBoxResponse,
@@ -275,3 +276,13 @@ async def update_sbox_buckle_alarm(
     _current_user=Depends(require_permission(Permission.SBOXES_MANAGE)),
 ):
     return await SboxService.update_buckle_alarm(db, box_id, request.enabled)
+
+
+@router.patch("/{box_id}/hook-ranges")
+async def update_sbox_hook_ranges(
+    box_id: int,
+    request: SBoxHookRangesRequest,
+    db: Session = Depends(get_db),
+    _current_user=Depends(require_permission(Permission.SBOXES_MANAGE)),
+):
+    return await SboxService.update_hook_ranges(db, box_id, request)

@@ -1,3 +1,14 @@
+# V7.2.0 dual alarm ranges and faster updates
+
+Download [v7.2.0](https://github.com/debarshiputatunda/elevox/releases/tag/v7.2.0): **433,328 bytes**, below 2 MB.
+
+- Two editable inclusive ranges per hook, initially 10–1,800 and 10,000–1,000,000. Both hooks must match a range; different bands are allowed.
+- Saved device-owned settings editable through both interfaces, with conflict and failed-save handling.
+- Alarms use fresh unsmoothed readings. Device-page and active backend polling target 100 ms without overlaps; minimum sensing period is 50 ms.
+- Existing sensing, calibration, hotspot, diagnostics and buckle controls retained.
+
+Upload `elevox-v7.2.0.bin` via **Firmware update**. Update the backend/frontend too; old single-threshold writes are rejected by v7.2. First upgrade initializes the new range defaults. Saved network/calibration preferences remain. See [setup](../../docs/V7_SETUP.md) for timing limits and protocol. Physical timing and alarms remain unverified.
+
 # V7.1.0 buckle alarm control
 
 Download [v7.1.0](https://github.com/debarshiputatunda/elevox/releases/tag/v7.1.0): **427,328 bytes**, below 2 MB.

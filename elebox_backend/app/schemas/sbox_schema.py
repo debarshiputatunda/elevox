@@ -72,3 +72,18 @@ class SBoxBuckleAlarmResponse(BaseModel):
     enabled: bool
     confirmed: bool
     confirmed_at: str
+
+
+class SBoxHookRangesRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    a: list[list[int]]
+    b: list[list[int]]
+    expected_revision: int = Field(strict=True, ge=0, le=2**32 - 1)
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_ranges(cls, value):
+        from app.utils.hook_ranges import validate_hook_ranges
+        if isinstance(value, dict):
+            validate_hook_ranges({key: value.get(key) for key in ('a', 'b')})
+        return value
