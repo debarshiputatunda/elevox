@@ -1,3 +1,14 @@
+# V8.0.0 saved default Wi-Fi fix
+
+Download [v8.0.0](https://github.com/debarshiputatunda/elevox/releases/tag/v8.0.0): **437,072 bytes**, below 2 MB. Based on the supplied v7.3.1 hook-case archive.
+
+- Connects the saved default shortly after boot even when hotspot clients are present.
+- SET DEFAULT enables auto-connect and starts connection; router loss retries the default, then saved fallback profiles with bounded backoff.
+- Hotspot remains enabled. Explicit DISCONNECT still persists until SET DEFAULT, CONNECT or SAVE & CONNECT re-enables connection.
+- Existing archive sensing, hook-case classification, alarms, calibration and profile storage retained.
+
+Upload the binary via the firmware field at `http://192.168.4.1/update`. No database migration or website changes needed. See [v8 setup](../../docs/V8_SETUP.md). Simulated tests and compilation pass; real RF association remains to be checked on the device.
+
 # V7.2.1 sensing readout visibility
 
 Download [v7.2.1](https://github.com/debarshiputatunda/elevox/releases/tag/v7.2.1): **435,840 bytes**, below 2 MB.

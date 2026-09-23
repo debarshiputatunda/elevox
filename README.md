@@ -2,6 +2,10 @@
 
 Connected safety-harness monitoring: ESP8266 firmware, a FastAPI/MySQL backend, and a React dashboard with live telemetry and a 3D harness view.
 
+## Latest firmware
+
+[v8.0.0](https://github.com/debarshiputatunda/elevox/releases/tag/v8.0.0) is based on the supplied v7.3.1 hook-case firmware and fixes saved default Wi-Fi auto-connect while retaining the hotspot. See [v8 setup](docs/V8_SETUP.md), source in `firmware/safety_harness_esp8266_v8`, and build with `firmware/build_v8.sh`.
+
 ## Workspace
 
 - `elebox_backend/` — REST API, device polling, WebSockets, notifications and MySQL persistence.
